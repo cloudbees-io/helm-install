@@ -1,0 +1,27 @@
+= CloudBees action: Install a Helm chart
+
+Use this action to install a Helm chart into a Kubernetes cluster.
+
+== Usage
+
+In your YAML file, add:
+
+[source,yaml]
+----
+      - name: Install Helm chart
+        uses: cloudbees-io/helm-install@v1
+        with:
+          release-name: nginx#<1>
+          chart-location: oci://ghcr.io/nginxinc/charts/nginx-ingress#<2>
+
+----
+<1> The Helm release name.
+<2> The Helm chart location, which can be a URL, a local chart archive, a chart repo alias or chart name, or an unpacked chart directory.
+
+== License
+This code is made available under the 
+link:https://opensource.org/license/mit/[MIT license].
+
+== Reference
+* Learn more about link:https://docs.cloudbees.com/docs/cloudbees-saas-platform-actions/latest/[using actions in CloudBees workflows].
+* Learn about link:https://docs.cloudbees.com/docs/cloudbees-saas-platform/latest/[the CloudBees platform].

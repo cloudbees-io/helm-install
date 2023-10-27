@@ -1,0 +1,103 @@
+name: helm-install-action
+apiVersion: automation.cloudbees.io/v1alpha1
+kind: workflow
+
+on:
+  push:
+    branches:
+      - '**'
+jobs:
+  build:
+    steps:
+    - name: get source code
+      uses: cloudbees-io/checkout@v1
+    - id: dockerconfig
+      name: Configure container registry credentials
+      uses: cloudbees-io/configure-oci-credentials@v0
+      with:
+        registry: ${{ vars.STAGING_DOCKER_REGISTRY }}
+        username: ${{ secrets.STAGING_DOCKER_USERNAME }}
+        password: ${{ secrets.STAGING_DOCKER_PASSWORD }}
+    - name: docker build and publish
+      uses: cloudbees-io/kaniko
+      with:
+        destination: registry.saas-dev.beescloud.com/staging/helm-install-action:${{ cloudbees.scm.branch }}${{ cloudbees.scm.branch == 'main' && ',registry.saas-dev.beescloud.com/staging/helm-install-action:latest' || '' }}
+        labels: maintaner=sdp-pod-3,email=engineering@cloudbees.io
+  install-test:
+    steps:
+    - name: write kube config
+      uses: docker://alpine:3.17
+      run: |
+        mkdir -p ${HOME}/.kube
+        echo -e "${{ secrets.STAGING_CONFIG }}" > ${HOME}/.kube/config
+    - name: checkout
+      uses: cloudbees-io/checkout@v1
+    - id: createns
+      name: Create Kubernetes Namespace
+      uses: cloudbees-io/create-k8s-namespace@v1
+      with:
+        name: ${{ format('{0}{1}{2}', cloudbees.scm.branch, cloudbees.scm.repository, cloudbees.scm.sha) }}
+        sanitize-name: "true"
+        labels: |
+          cloudbees.io/cleanup: "true"
+    - name: install a helm chart with dry-run enabled
+      uses: .
+      with:
+        release-name: nginx-dry-run
+        chart-location: oci://registry-1.docker.io/bitnamicharts/nginx
+        version: 15.3.4
+        namespace: ${{ steps.createns.outputs.name }}
+        dry-run: 'true'
+    - name: install a helm chart
+      uses: .
+      with:
+        release-name: nginx
+        chart-location: oci://registry-1.docker.io/bitnamicharts/nginx
+        version: 15.3.4
+        namespace: ${{ steps.createns.outputs.name }}
+    - name: install a local helm chart with inline values
+      uses: .
+      with:
+        release-name: example
+        chart-location: charts/example
+        dependency-build: 'true'
+        namespace: ${{ steps.createns.outputs.name }}
+        debug: 'true'
+        timeout: 1m
+        values: |
+          myobj:
+            myproperty: override value
+            examplejsonstring: '{"auths":{}}'
+    - id: invalid-inline-values
+      name: Try to install a helm chart with malformed inline values
+      continue-on-error: true
+      uses: .
+      with:
+        release-name: example-invalid-values
+        chart-location: charts/example
+        dependency-build: 'true'
+        namespace: ${{ steps.createns.outputs.name }}
+        debug: 'true'
+        timeout: 1m
+        values: |
+          myobj: malformed
+            asdf:
+    - name: install a local helm chart with dependencies and timeout
+      continue-on-error: true
+      uses: .
+      with:
+        release-name: example
+        chart-location: charts/example_with_dependency
+        dependency-build: 'true'
+        namespace: ${{ steps.createns.outputs.name }}
+        timeout: 5m
+    - name: install multiple values files
+      uses: .
+      with:
+        release-name: example
+        chart-location: charts/example
+        namespace: ${{ steps.createns.outputs.name }}
+        timeout: 2m
+        values-files: |
+          charts/example/values.yaml
+          charts/example/values-test.yaml

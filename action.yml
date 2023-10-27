@@ -1,0 +1,122 @@
+apiVersion: automation.cloudbees.io/v1alpha1
+kind: action
+name: 'Helm chart install'
+description: 'Using helm to install a chart'
+inputs:
+  release-name:
+    description: 'Helm release name'
+    required: true
+  namespace:
+    description: 'Kubernetes namespace to install the chart in, created if missing'
+    default: default
+  version: 
+    description: 'Version of the chart to be installed'
+  # DEPRECATED: values-file is deprecated, use values-files instead
+  values-file:
+    description: 'Path to a values file relative to the workspace'
+  values-files:
+    description: 'List of values files relative to the workspace separated by newline'
+  values:
+    description: 'An inline YAML representation of a values file passed to the Helm command'
+  timeout:
+    description: 'Helm chart installation timeout'
+    default: 5m
+  chart-location:
+    description: >
+      Helm chart location, can be a URL, a local chart archive,
+      chart repo alias/chart name or an unpacked chart directory
+    required: true
+  max-history:
+    description: 'MaxHistory limits the maximum number of revisions saved per release'
+    default: '10'
+  debug:
+    description: 'Execute the helm command in debug mode'
+    default: 'false'
+  dependency-build:
+    description: 'Build dependencies based on the contents of Chart.lock file'
+    default: 'false'
+  env-vars-file:
+    description: >
+      An optional file with key value pairs of the format 'export key=value'
+      to export in the environment before execution of the helm commands.
+  dry-run:
+    description: 'Simulate an upgrade, without actually doing it'
+    default: 'false'
+runs:
+  using: composite
+  steps:
+    - id: helm-install
+      name: Install a Helm chart
+      uses: docker://registry.saas-dev.beescloud.com/staging/helm-install-action:latest
+      run: |
+        set -uo pipefail
+
+        if [ "$ENV_FILE" ]; then
+          source "$ENV_FILE"
+        fi
+
+        printf %s "$VALUES_INLINE" > /tmp/inline-values.yaml
+        yq eval /tmp/inline-values.yaml >/dev/null || (
+          echo Dumping interpolated inline-values.yaml: >&2
+          cat -n /tmp/inline-values.yaml >&2
+        cat - >&2 <<-EOF
+        
+        ERROR: Malformed YAML provided with the values input!
+               Please note that expression interpolation may result in malformed YAML.
+               This depends on the contents of the vars/secrets you are using.
+               To prevent these kinds of errors from happening, please escape values using the toJSON function.
+               Example:
+                 values: |
+                   password: ${{ '\${{ toJSON(secrets.mypassword) }}' }}
+        EOF
+          false
+        )
+
+        if [ "$VALUES_FILE" ]; then
+          cp "$VALUES_FILE" /tmp/values.yaml
+        else
+          touch /tmp/values.yaml          
+        fi
+
+        value_files_arg=""
+
+        if [ "$VALUES_FILES" ]; then
+          readarray -t value_files <<< "$VALUES_FILES"
+         
+          INDEX=0
+          for f in "${value_files[@]}" 
+          do 
+            if [ "$f" ]; then
+              echo "Looking for values file: ${f}"
+              cp "$f" "/tmp/value_file_${INDEX}.yaml"
+              value_files_arg="${value_files_arg} --values /tmp/value_file_${INDEX}.yaml"
+              let INDEX=${INDEX}+1
+            fi
+          done
+        fi
+
+        if [ "$BUILD_DEPENDENCIES" == true ]; then
+          echo "Building chart dependencies"
+          helm dependency build "$CHART_LOCATION"
+        fi
+
+        echo "Installing helm release $RELEASE_NAME from chart location $CHART_LOCATION into namespace $HELM_NAMESPACE"
+        helm upgrade --install "$RELEASE_NAME" "$CHART_LOCATION" \
+          --version "$CHART_VERSION" \
+          --values /tmp/values.yaml ${value_files_arg} \
+          --values /tmp/inline-values.yaml \
+          --create-namespace --dry-run=${{ inputs.dry-run == 'true' }} \
+          --wait --timeout "$TIMEOUT"
+      env:
+        CHART_LOCATION: ${{ inputs.chart-location }}
+        CHART_VERSION: ${{ inputs.version }}
+        RELEASE_NAME: ${{ inputs.release-name }}
+        VALUES_FILE: ${{ inputs.values-file }}
+        VALUES_FILES: ${{ inputs.values-files }}
+        VALUES_INLINE: ${{ inputs.values }}
+        ENV_FILE: ${{ inputs.env-vars-file }}
+        BUILD_DEPENDENCIES: ${{ inputs.dependency-build }}
+        TIMEOUT: ${{ inputs.timeout }}
+        HELM_NAMESPACE: ${{ inputs.namespace }}
+        HELM_MAX_HISTORY: ${{ inputs.max-history }}
+        HELM_DEBUG: ${{ inputs.debug == 'true' && 'true' || 'false' }}
