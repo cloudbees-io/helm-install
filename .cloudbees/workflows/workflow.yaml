@@ -11,6 +11,15 @@ jobs:
     steps:
     - name: get source code
       uses: cloudbees-io/checkout@v1
+    - name: Run bats tests
+      uses: docker://bash:5-alpine3.18
+      run: |
+        wget -qO - https://github.com/bats-core/bats-core/archive/refs/tags/v${BATS_VERSION}.tar.gz | tar -C /tmp -xzf -
+        /tmp/bats-core-$BATS_VERSION/install.sh /usr/local
+        set -x
+        bats -T .
+      env:
+        BATS_VERSION: 1.10.0
     - id: dockerconfig
       name: Configure container registry credentials
       uses: cloudbees-io/configure-oci-credentials@v0
@@ -21,9 +30,10 @@ jobs:
     - name: docker build and publish
       uses: cloudbees-io/kaniko
       with:
-        destination: registry.saas-dev.beescloud.com/staging/helm-install-action:${{ cloudbees.scm.branch }}${{ cloudbees.scm.branch == 'main' && ',registry.saas-dev.beescloud.com/staging/helm-install-action:latest' || '' }}
+        destination: registry.saas-dev.beescloud.com/staging/helm-install-action:${{ cloudbees.scm.sha }}
         labels: maintaner=sdp-pod-3,email=engineering@cloudbees.io
   install-test:
+    needs: build
     steps:
     - name: write kube config
       uses: docker://alpine:3.17
@@ -40,7 +50,7 @@ jobs:
         sanitize-name: "true"
         labels: |
           cloudbees.io/cleanup: "true"
-    - name: install a helm chart with dry-run enabled
+    - name: install an OCI helm chart with dry-run enabled
       uses: .
       with:
         release-name: nginx-dry-run
@@ -48,7 +58,7 @@ jobs:
         version: 15.4.2
         namespace: ${{ steps.createns.outputs.name }}
         dry-run: 'true'
-    - name: install a helm chart
+    - name: install an OCI helm chart
       uses: .
       with:
         release-name: nginx-example
@@ -82,7 +92,6 @@ jobs:
         dependency-build: 'true'
         namespace: ${{ steps.createns.outputs.name }}
         debug: 'true'
-        timeout: 1m
         values: |
           myobj: malformed
             asdf:
@@ -94,7 +103,7 @@ jobs:
         chart-location: charts/example_with_dependency
         dependency-build: 'true'
         namespace: ${{ steps.createns.outputs.name }}
-        timeout: 5m
+        timeout: 5m30s
     - name: install multiple values files
       uses: .
       with:
