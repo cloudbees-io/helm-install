@@ -45,16 +45,20 @@ jobs:
       with:
         release-name: nginx-dry-run
         chart-location: oci://registry-1.docker.io/bitnamicharts/nginx
-        version: 15.3.4
+        version: 15.4.2
         namespace: ${{ steps.createns.outputs.name }}
         dry-run: 'true'
     - name: install a helm chart
       uses: .
       with:
-        release-name: nginx
+        release-name: nginx-example
         chart-location: oci://registry-1.docker.io/bitnamicharts/nginx
-        version: 15.3.4
+        version: 15.4.2
         namespace: ${{ steps.createns.outputs.name }}
+        timeout: 2m
+        values: |
+          service:
+            type: ClusterIP
     - name: install a local helm chart with inline values
       uses: .
       with:
