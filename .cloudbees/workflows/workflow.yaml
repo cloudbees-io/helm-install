@@ -12,14 +12,10 @@ jobs:
     - name: get source code
       uses: cloudbees-io/checkout@v1
     - name: Run bats tests
-      uses: docker://bash:5-alpine3.18
-      run: |
-        wget -qO - https://github.com/bats-core/bats-core/archive/refs/tags/v${BATS_VERSION}.tar.gz | tar -C /tmp -xzf -
-        /tmp/bats-core-$BATS_VERSION/install.sh /usr/local
-        set -x
-        bats -T .
-      env:
-        BATS_VERSION: 1.10.0
+      uses: docker://bats/bats:v1.10.0
+      with:
+        entrypoint: /opt/bats/bin/bats
+        args: .
     - id: dockerconfig
       name: Configure container registry credentials
       uses: cloudbees-io/configure-oci-credentials@v0
