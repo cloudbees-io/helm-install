@@ -94,12 +94,10 @@ runs:
             statusCheckDeadlineSeconds: 90
             helm:
               releases:
-              - name: WILL_BE_REPLACED_BELOW
-                valuesFiles:
+              - valuesFiles:
                 - /tmp/values.yaml
                 createNamespace: true
                 skipBuildDependencies: true
-                upgradeOnChange: false
         EOF
         yq -i '.
           | .deploy.helm.releases[0].name = env(RELEASE_NAME)
@@ -151,6 +149,7 @@ runs:
         else
           # Let skaffold deploy the chart to log details on failure
           cd /tmp/skaffold
+          skaffold config set collect-metrics false
           skaffold deploy
         fi
       env:
