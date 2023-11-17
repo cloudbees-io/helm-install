@@ -47,9 +47,9 @@ runs:
   steps:
     - id: helm-install
       name: Install a Helm chart
-      # TODO: use public registry and static tag
-      #uses: docker://public.ecr.aws/l7o7z1g8/actions/helm-install-action:1.1.0
-      uses: docker://registry.saas-dev.beescloud.com/staging/helm-install-action:${{ action.scm.sha }}
+      uses: docker://public.ecr.aws/l7o7z1g8/actions/helm-install-action:1.1.0
+      # TODO: use interpolated tag once we aligned on the release process
+      #uses: docker://registry.saas-dev.beescloud.com/staging/helm-install-action:${{ action.scm.sha }}
       run: |
         set -uo pipefail
 
