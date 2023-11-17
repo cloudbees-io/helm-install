@@ -9,7 +9,7 @@ inputs:
   namespace:
     description: 'Kubernetes namespace to install the chart in, created if missing'
     default: default
-  version: 
+  version:
     description: 'Version of the chart to be installed'
   # DEPRECATED: values-file is deprecated, use values-files instead
   values-file:
@@ -47,7 +47,9 @@ runs:
   steps:
     - id: helm-install
       name: Install a Helm chart
-      uses: docker://public.ecr.aws/l7o7z1g8/actions/helm-install-action:1.0.0
+      uses: docker://public.ecr.aws/l7o7z1g8/actions/helm-install-action:1.1.0
+      # TODO: use interpolated tag once we aligned on the release process
+      #uses: docker://registry.saas-dev.beescloud.com/staging/helm-install-action:${{ action.scm.sha }}
       run: |
         set -uo pipefail
 
@@ -75,14 +77,50 @@ runs:
         if [ "$VALUES_FILE" ]; then
           cp "$VALUES_FILE" /tmp/values.yaml
         else
-          touch /tmp/values.yaml          
+          touch /tmp/values.yaml
+        fi
+
+        # Skaffold is used as helm wrapper here to log more detailed information in case of a rollout failure.
+        # See https://skaffold.dev/docs/status-check/
+        export TIMEOUT_SECONDS="$(duration2seconds "$TIMEOUT")"
+        mkdir /tmp/skaffold
+        cat - >/tmp/skaffold/skaffold.yaml <<-EOF
+          apiVersion: skaffold/v3
+          kind: Config
+          metadata:
+            name: data
+          deploy:
+            statusCheck: true
+            statusCheckDeadlineSeconds: 90
+            helm:
+              releases:
+              - name: WILL_BE_REPLACED_BELOW
+                valuesFiles:
+                - /tmp/values.yaml
+                createNamespace: true
+                skipBuildDependencies: true
+                upgradeOnChange: false
+        EOF
+        yq -i '.
+          | .deploy.helm.releases[0].name = env(RELEASE_NAME)
+          | .deploy.helm.releases[0].skipBuildDependencies = env(BUILD_DEPENDENCIES) != "true"
+          | .deploy.statusCheckDeadlineSeconds = env(TIMEOUT_SECONDS)
+          ' /tmp/skaffold/skaffold.yaml
+        if echo "$CHART_LOCATION" | grep -q '^oci://'; then # remote chart
+          yq -i '.
+            | .deploy.helm.releases[0].remoteChart = env(CHART_LOCATION)
+            | .deploy.helm.releases[0].version = env(CHART_VERSION)
+            ' /tmp/skaffold/skaffold.yaml
+        else # local chart
+          echo "Resolving local chart path: $CHART_LOCATION"
+          export CHART_PATH="$(realpath "$CHART_LOCATION")"
+          yq -i '.deploy.helm.releases[0].chartPath = env(CHART_PATH)' /tmp/skaffold/skaffold.yaml
         fi
 
         value_files_arg=""
 
         if [ "$VALUES_FILES" ]; then
           readarray -t value_files <<< "$VALUES_FILES"
-         
           INDEX=0
           for f in "${value_files[@]}" 
           do 
@@ -91,22 +129,30 @@ runs:
               cp "$f" "/tmp/value_file_${INDEX}.yaml"
               value_files_arg="${value_files_arg} --values /tmp/value_file_${INDEX}.yaml"
               let INDEX=${INDEX}+1
+              export VALUES_FILE="$(realpath "$f")"
+              yq -i '.deploy.helm.releases[0].valuesFiles += env(VALUES_FILE)' /tmp/skaffold/skaffold.yaml
             fi
           done
         fi
 
-        if [ "$BUILD_DEPENDENCIES" == true ]; then
-          echo "Building chart dependencies"
-          helm dependency build "$CHART_LOCATION"
-        fi
+        yq -i '.deploy.helm.releases[0].valuesFiles += "/tmp/inline-values.yaml"' /tmp/skaffold/skaffold.yaml
 
         echo "Installing helm release $RELEASE_NAME from chart location $CHART_LOCATION into namespace $HELM_NAMESPACE"
-        helm upgrade --install "$RELEASE_NAME" "$CHART_LOCATION" \
-          --version "$CHART_VERSION" \
-          --values /tmp/values.yaml ${value_files_arg} \
-          --values /tmp/inline-values.yaml \
-          --create-namespace --dry-run=${{ inputs.dry-run == 'true' }} \
-          --wait --timeout "$TIMEOUT"
+        if [ "${{ inputs.dry-run == 'true' }}" = true ]; then
+          # Run helm in dry-run mode
+          helm upgrade --install "$RELEASE_NAME" "$CHART_LOCATION" \
+            --version "$CHART_VERSION" \
+            --values /tmp/values.yaml \
+            ${value_files_arg} \
+            --values /tmp/inline-values.yaml \
+            --create-namespace \
+            --timeout "$TIMEOUT" \
+            --dry-run
+        else
+          # Let skaffold deploy the chart to log details on failure
+          cd /tmp/skaffold
+          skaffold deploy
+        fi
       env:
         CHART_LOCATION: ${{ inputs.chart-location }}
         CHART_VERSION: ${{ inputs.version }}
