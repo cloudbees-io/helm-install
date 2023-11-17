@@ -78,6 +78,25 @@ jobs:
           myobj:
             myproperty: override value
             examplejsonstring: '{"auths":{}}'
+    - name: upgrade chart release with changed values
+      uses: .
+      with:
+        release-name: example
+        chart-location: charts/example
+        dependency-build: 'true'
+        namespace: ${{ steps.createns.outputs.name }}
+        debug: 'true'
+        timeout: 1m
+        values: |
+          myobj:
+            myproperty: changed value
+            examplejsonstring: '{"auths":{}}'
+    - name: verify chart release was upgraded
+      uses: docker://alpine/k8s:1.27.3
+      run: |
+        set -eu
+        VAL="$(kubectl get cm example -n ${{ steps.createns.outputs.name }} -o jsonpath={.data.key})"
+        [ "$VAL" = 'changed value' ]
     - id: invalid-inline-values
       name: Try to install a helm chart with malformed inline values
       continue-on-error: true
