@@ -98,6 +98,7 @@ runs:
                 - /tmp/values.yaml
                 createNamespace: true
                 skipBuildDependencies: true
+                upgradeOnChange: true
         EOF
         yq -i '.
           | .deploy.helm.releases[0].name = env(RELEASE_NAME)
