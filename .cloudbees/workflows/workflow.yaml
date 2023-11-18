@@ -54,7 +54,7 @@ jobs:
         version: 15.4.2
         namespace: ${{ steps.createns.outputs.name }}
         dry-run: 'true'
-    - name: install an OCI helm chart
+    - name: install an remote/OCI helm chart
       uses: .
       with:
         release-name: nginx-example
@@ -65,6 +65,23 @@ jobs:
         values: |
           service:
             type: ClusterIP
+    - name: upgrade an remote/OCI helm chart
+      uses: .
+      with:
+        release-name: nginx-example
+        chart-location: oci://registry-1.docker.io/bitnamicharts/nginx
+        version: 15.4.2
+        namespace: ${{ steps.createns.outputs.name }}
+        timeout: 2m
+        values: |
+          commonLabels:
+            some-label: some-label-value
+    - name: verify remote/OCI chart release was upgraded
+      uses: docker://alpine/k8s:1.27.3
+      run: |
+        set -ux
+        VAL="$(kubectl get deployment nginx-example -n ${{ steps.createns.outputs.name }} -o jsonpath={.metadata.labels.some-label})"
+        [ "$VAL" = 'some-label-value' ]
     - name: install a local helm chart with inline values
       uses: .
       with:
@@ -78,7 +95,7 @@ jobs:
           myobj:
             myproperty: override value
             examplejsonstring: '{"auths":{}}'
-    - name: upgrade chart release with changed values
+    - name: upgrade local chart release with changed values
       uses: .
       with:
         release-name: example
@@ -91,10 +108,10 @@ jobs:
           myobj:
             myproperty: changed value
             examplejsonstring: '{"auths":{}}'
-    - name: verify chart release was upgraded
+    - name: verify local chart release was upgraded
       uses: docker://alpine/k8s:1.27.3
       run: |
-        set -eu
+        set -ux
         VAL="$(kubectl get cm example -n ${{ steps.createns.outputs.name }} -o jsonpath={.data.key})"
         [ "$VAL" = 'changed value' ]
     - id: invalid-inline-values
