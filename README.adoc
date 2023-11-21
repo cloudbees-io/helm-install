@@ -2,7 +2,38 @@
 
 Use this action to install a Helm chart into a Kubernetes cluster.
 
-== Usage
+include::ROOT:partial$github-link.adoc[]
+
+== Inputs
+
+[cols="2a,1a,1a,3a",options="header"]
+.Input details
+|===
+
+| Input name
+| Data type
+| Required?
+| Description
+
+| `release-name`
+| String
+| Yes
+| The Helm release name.
+
+
+| `chart-location`
+| String
+| Yes
+| The Helm chart location, which can be:
+
+* A URL.
+* A local chart archive.
+* A chart repository alias or chart name.
+* An unpacked chart directory.
+
+|===
+
+== Usage example
 
 In your YAML file, add:
 
@@ -11,17 +42,17 @@ In your YAML file, add:
       - name: Install Helm chart
         uses: cloudbees-io/helm-install@v1
         with:
-          release-name: nginx#<1>
-          chart-location: oci://ghcr.io/nginxinc/charts/nginx-ingress#<2>
+          release-name: nginx
+          chart-location: oci://ghcr.io/nginxinc/charts/nginx-ingress
 
 ----
-<1> The Helm release name.
-<2> The Helm chart location, which can be a URL, a local chart archive, a chart repo alias or chart name, or an unpacked chart directory.
 
 == License
+
 This code is made available under the 
 link:https://opensource.org/license/mit/[MIT license].
 
 == Reference
+
 * Learn more about link:https://docs.cloudbees.com/docs/cloudbees-saas-platform-actions/latest/[using actions in CloudBees workflows].
 * Learn about link:https://docs.cloudbees.com/docs/cloudbees-saas-platform/latest/[the CloudBees platform].
