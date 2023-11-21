@@ -2,8 +2,6 @@
 
 Use this action to install a Helm chart into a Kubernetes cluster.
 
-include::ROOT:partial$github-link.adoc[]
-
 == Inputs
 
 [cols="2a,1a,1a,3a",options="header"]
@@ -52,7 +50,7 @@ In your YAML file, add:
 This code is made available under the 
 link:https://opensource.org/license/mit/[MIT license].
 
-== Reference
+== References
 
 * Learn more about link:https://docs.cloudbees.com/docs/cloudbees-saas-platform-actions/latest/[using actions in CloudBees workflows].
 * Learn about link:https://docs.cloudbees.com/docs/cloudbees-saas-platform/latest/[the CloudBees platform].
