@@ -1,4 +1,4 @@
-FROM alpine/helm:3.12.1
+FROM alpine/helm:3.13.2
 
 RUN apk update && \
     apk add --no-cache aws-cli yq
