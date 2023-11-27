@@ -26,7 +26,7 @@ NOTE: This action does not support using Helm charts from traditional Helm repos
 | Yes
 | The Helm chart location, which is one of:
 
-* An OCI-based chart URL.
+* An link:https://helm.sh/docs/topics/registries/[OCI-based] chart URL. 
 * A local chart in TGZ archive format.
 * An unpacked local chart directory.
 
