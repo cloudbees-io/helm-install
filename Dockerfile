@@ -3,6 +3,8 @@ FROM alpine/helm:3.13.2
 RUN apk update && \
     apk add --no-cache aws-cli yq
 
+RUN apk upgrade --no-cache
+
 ARG SKAFFOLD_VERSION=v2.9.0
 RUN set -eux; \
 	ARCH="`uname -m | sed 's!x86_64!amd64!; s!aarch64!arm64!'`"; \
