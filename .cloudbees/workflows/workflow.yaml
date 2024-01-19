@@ -26,7 +26,7 @@ jobs:
     - name: docker build and publish
       uses: cloudbees-io/kaniko
       with:
-        destination: registry.saas-dev.beescloud.com/staging/helm-install-action:${{ cloudbees.scm.sha }}${{ cloudbees.scm.branch == 'main' && ',registry.saas-dev.beescloud.com/staging/helm-install-action:1.1.2' || '' }}${{ cloudbees.scm.branch == 'main' && ',registry.saas-dev.beescloud.com/staging/helm-install-action:latest' || '' }}
+        destination: registry.saas-dev.beescloud.com/staging/helm-install-action:${{ cloudbees.scm.sha }}${{ cloudbees.scm.branch == 'main' && ',registry.saas-dev.beescloud.com/staging/helm-install-action:1.1.2,registry.saas-dev.beescloud.com/staging/helm-install-action:latest' || '' }}
         labels: maintainer=sdp-pod-3,email=engineering@cloudbees.com
   install-test:
     needs: build
