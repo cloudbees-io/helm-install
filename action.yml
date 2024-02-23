@@ -99,9 +99,18 @@ runs:
                 createNamespace: true
                 skipBuildDependencies: true
                 upgradeOnChange: true
+              flags:
+                install:
+                - "--timeout"
+                - "5m"
+                upgrade:
+                - "--timeout"
+                - "5m"
         EOF
         yq -i '.
           | .deploy.helm.releases[0].name = env(RELEASE_NAME)
+          | .deploy.helm.flags.install[1] = env(TIMEOUT)
+          | .deploy.helm.flags.upgrade[1] = env(TIMEOUT)
           | .deploy.helm.releases[0].skipBuildDependencies = env(BUILD_DEPENDENCIES) != "true"
           | .deploy.statusCheckDeadlineSeconds = env(TIMEOUT_SECONDS)
           ' /tmp/skaffold/skaffold.yaml
