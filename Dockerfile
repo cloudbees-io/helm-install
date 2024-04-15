@@ -5,7 +5,7 @@ RUN apk update && \
 
 RUN apk upgrade --no-cache
 
-ARG SKAFFOLD_VERSION=v2.10.0
+ARG SKAFFOLD_VERSION=v2.11.0
 RUN set -eux; \
 	ARCH="`uname -m | sed 's!x86_64!amd64!; s!aarch64!arm64!'`"; \
 	wget -qO /usr/local/bin/skaffold https://github.com/GoogleContainerTools/skaffold/releases/download/$SKAFFOLD_VERSION/skaffold-linux-$ARCH; \
