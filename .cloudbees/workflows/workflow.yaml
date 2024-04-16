@@ -33,7 +33,7 @@ jobs:
     - name: docker build and publish
       uses: cloudbees-io/kaniko
       with:
-        destination: registry.saas-dev.beescloud.com/staging/helm-install-action:${{ cloudbees.scm.sha }}${{ cloudbees.scm.branch == 'main' && ',registry.saas-dev.beescloud.com/staging/helm-install-action:1.1.3,registry.saas-dev.beescloud.com/staging/helm-install-action:latest' || '' }}
+        destination: registry.saas-dev.beescloud.com/staging/helm-install-action:${{ cloudbees.scm.sha }}${{ cloudbees.scm.branch == 'main' && ',registry.saas-dev.beescloud.com/staging/helm-install-action:1.1.4,registry.saas-dev.beescloud.com/staging/helm-install-action:latest' || '' }}
         labels: maintainer=sdp-pod-3,email=engineering@cloudbees.com
   install-test:
     needs: build
@@ -153,3 +153,11 @@ jobs:
         values-files: |
           charts/example/values.yaml
           charts/example/values-test.yaml
+    - name: install a local helm chart with wait set to false
+      uses: .
+      with:
+        release-name: example-deployment
+        chart-location: charts/example-deployment
+        namespace: ${{ steps.createns.outputs.name }}
+        timeout: 1m
+        wait: 'false'

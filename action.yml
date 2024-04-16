@@ -39,6 +39,9 @@ inputs:
     description: >
       An optional file with key value pairs of the format 'export key=value'
       to export in the environment before execution of the helm commands.
+  wait:
+    description: 'enables waiting for deployments to stabilize'
+    default: 'true'
   dry-run:
     description: 'Simulate an upgrade, without actually doing it'
     default: 'false'
@@ -47,9 +50,9 @@ runs:
   steps:
     - id: helm-install
       name: Install a Helm chart
-      uses: docker://public.ecr.aws/l7o7z1g8/actions/helm-install-action:1.1.3
+      # uses: docker://public.ecr.aws/l7o7z1g8/actions/helm-install-action:1.1.4
       # TODO: use interpolated tag once we aligned on the release process
-      # uses: docker://registry.saas-dev.beescloud.com/staging/helm-install-action:${{ action.scm.sha }}
+      uses: docker://registry.saas-dev.beescloud.com/staging/helm-install-action:${{ action.scm.sha }}
       run: |
         set -uo pipefail
 
@@ -90,7 +93,7 @@ runs:
           metadata:
             name: data
           deploy:
-            statusCheck: true
+            statusCheck: ${{ inputs.wait }}
             statusCheckDeadlineSeconds: 90
             tolerateFailuresUntilDeadline: true
             helm:
