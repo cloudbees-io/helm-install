@@ -154,10 +154,9 @@ jobs:
           charts/example/values.yaml
           charts/example/values-test.yaml
     - name: install a local helm chart with wait set to false
-      continue-on-error: true
       uses: .
       with:
-        release-name: example
+        release-name: example-deployment
         chart-location: charts/example-deployment
         namespace: ${{ steps.createns.outputs.name }}
         timeout: 1m
