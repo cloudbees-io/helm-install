@@ -38,7 +38,7 @@ jobs:
     - name: docker build and publish
       uses: cloudbees-io/kaniko
       with:
-        destination: ${{ vars.staging_action_registry }}/actions/helm-install-action:${{ cloudbees.scm.sha }}${{ cloudbees.scm.branch == 'main' && format(',{0}/actions/helm-install-action:1.1.5,{0}/actions/configure-git-global-credentials:latest', vars.staging_action_registry)  || format(',{0}/actions/helm-install-action:{1}', vars.staging_action_registry, cloudbees.version) }}
+        destination: ${{ vars.staging_action_registry }}/actions/helm-install-action:${{ cloudbees.scm.sha }}${{ cloudbees.scm.branch == 'main' && format(',{0}/actions/helm-install-action:1.1.5,{0}/actions/helm-install-action:latest', vars.staging_action_registry)  || format(',{0}/actions/helm-install-action:{1}', vars.staging_action_registry, cloudbees.version) }}
         context: ${{ cloudbees.workspace }}
         labels: maintainer=sdp-pod-3,email=engineering@cloudbees.com
   install-test:
@@ -57,7 +57,7 @@ jobs:
       name: Login to Dockerhub using Cloudbees service account
       uses: cloudbees-io/configure-oci-credentials@v1
       with:
-        registry: docker.io
+        registry: registry-1.docker.io
         username: ${{ secrets.e5bbc3_dockerhub_user }}
         password: ${{ secrets.e5bbc3_dockerhub_password }}
     - uses: cloudbees-io/configure-eks-credentials@v1
