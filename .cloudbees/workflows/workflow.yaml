@@ -8,7 +8,6 @@ on:
       - '**'
 jobs:
   build:
-    if: cloudbees.api.url == 'https://api.saas-preprod.beescloud.com' || cloudbees.api.url == 'https://api.cloudbees.io'
     permissions:
       scm-token-own: read
       id-token: write
@@ -28,7 +27,7 @@ jobs:
           role-duration-seconds: "3600"
     - id: ecrconfig
       name: Configure container registry for staging ECR
-      uses: cloudbees-io/configure-ecr-credentials@v0
+      uses: cloudbees-io/configure-ecr-credentials@v1
     - id: dockerhub
       name: Login to Dockerhub using Cloudbees service account
       uses: cloudbees-io/configure-oci-credentials@v1
@@ -39,7 +38,7 @@ jobs:
     - name: docker build and publish
       uses: cloudbees-io/kaniko
       with:
-        destination: ${{ vars.STAGING_DOCKER_REGISTRY }}/staging/helm-install-action:${{ cloudbees.scm.sha }}${{ cloudbees.scm.branch == 'main' && format(',{0}/staging/helm-install-action:1.1.5,{0}/staging/configure-git-global-credentials:latest', vars.STAGING_DOCKER_REGISTRY)  || format(',{0}/staging/helm-install-action:{1}', vars.STAGING_DOCKER_REGISTRY, cloudbees.version) }}
+        destination: ${{ vars.staging_action_registry }}/actions/helm-install-action:${{ cloudbees.scm.sha }}${{ cloudbees.scm.branch == 'main' && format(',{0}/actions/helm-install-action:1.1.5,{0}/actions/configure-git-global-credentials:latest', vars.staging_action_registry)  || format(',{0}/actions/helm-install-action:{1}', vars.staging_action_registry, cloudbees.version) }}
         context: ${{ cloudbees.workspace }}
         labels: maintainer=sdp-pod-3,email=engineering@cloudbees.com
   install-test:
