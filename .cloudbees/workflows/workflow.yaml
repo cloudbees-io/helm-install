@@ -38,7 +38,7 @@ jobs:
     - name: docker build and publish
       uses: cloudbees-io/kaniko
       with:
-        destination: ${{ vars.staging_action_registry }}/actions/helm-install-action:${{ cloudbees.scm.sha }}${{ cloudbees.scm.branch == 'main' && format(',{0}/actions/helm-install-action:1.1.5,{0}/actions/helm-install-action:latest', vars.staging_action_registry)  || format(',{0}/actions/helm-install-action:{1}', vars.staging_action_registry, cloudbees.version) }}
+        destination: ${{ vars.staging_action_registry }}/helm-install-action:${{ cloudbees.scm.sha }}${{ cloudbees.scm.branch == 'main' && format(',{0}/helm-install-action:1.1.5,{0}/helm-install-action:latest', vars.staging_action_registry)  || format(',{0}/helm-install-action:{1}', vars.staging_action_registry, cloudbees.version) }}
         context: ${{ cloudbees.workspace }}
         labels: maintainer=sdp-pod-3,email=engineering@cloudbees.com
   install-test:
