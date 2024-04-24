@@ -21,11 +21,11 @@ jobs:
         entrypoint: /opt/bats/bin/bats
         args: .
     - name: Login to AWS
-        uses: https://github.com/cloudbees-io/configure-aws-credentials@v1
-        with:
-          aws-region: us-east-1
-          role-to-assume: ${{ vars.oidc_staging_iam_role }}
-          role-duration-seconds: "3600"
+      uses: https://github.com/cloudbees-io/configure-aws-credentials@v1
+      with:
+        aws-region: us-east-1
+        role-to-assume: ${{ vars.oidc_staging_iam_role }}
+        role-duration-seconds: "3600"
     - id: ecrconfig
       name: Configure container registry for staging ECR
       uses: cloudbees-io/configure-ecr-credentials@v1
@@ -45,15 +45,15 @@ jobs:
   install-test:
     needs: build
     steps:
-     - name: Login to AWS
-        uses: https://github.com/cloudbees-io/configure-aws-credentials@v1
-        with:
-          aws-region: us-east-1
-          role-to-assume: ${{ vars.oidc_staging_iam_role }}
-          role-duration-seconds: "3600"
+    - name: Login to AWS
+      uses: https://github.com/cloudbees-io/configure-aws-credentials@v1
+      with:
+        aws-region: us-east-1
+        role-to-assume: ${{ vars.oidc_staging_iam_role }}
+        role-duration-seconds: "3600"
     - id: ecrconfig
       name: Configure container registry for staging ECR
-      uses: cloudbees-io/configure-ecr-credentials@v0
+      uses: cloudbees-io/configure-ecr-credentials@v1
     - id: dockerhub
       name: Login to Dockerhub using Cloudbees service account
       uses: cloudbees-io/configure-oci-credentials@v1
@@ -62,8 +62,8 @@ jobs:
         username: ${{ secrets.e5bbc3_dockerhub_user }}
         password: ${{ secrets.e5bbc3_dockerhub_password }}
     - uses: cloudbees-io/configure-eks-credentials@v1
-        with:
-          name: ${{ vars.staging_east_cluster_name }}
+      with:
+        name: ${{ vars.staging_east_cluster_name }}
     - name: checkout
       uses: cloudbees-io/checkout@v1
     - id: createns
