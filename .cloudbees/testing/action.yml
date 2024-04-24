@@ -50,7 +50,7 @@ runs:
   steps:
     - id: helm-install
       name: Install a Helm chart
-      uses: docker://public.ecr.aws/l7o7z1g8/actions/helm-install-action:${{ action.scm.sha }}
+      uses: docker://020229604682.dkr.ecr.us-east-1.amazonaws.com/actions/helm-install-action:${{ action.scm.sha }}
       # TODO: use interpolated tag once we aligned on the release process
       # uses: docker://registry.saas-dev.beescloud.com/staging/helm-install-action:${{ action.scm.sha }}
       run: |

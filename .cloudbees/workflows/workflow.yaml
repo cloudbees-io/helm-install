@@ -8,6 +8,7 @@ on:
       - '**'
 jobs:
   build:
+    if: cloudbees.api.url == 'https://api.saas-preprod.beescloud.com' || cloudbees.api.url == 'https://api.cloudbees.io'
     permissions:
       scm-token-own: read
       id-token: write
@@ -38,7 +39,7 @@ jobs:
     - name: docker build and publish
       uses: cloudbees-io/kaniko
       with:
-        destination: ${{ vars.staging_action_registry }}/helm-install-action:${{ cloudbees.scm.sha }}${{ cloudbees.scm.branch == 'main' && format(',{0}/helm-install-action:1.1.5,{0}/helm-install-action:latest', vars.staging_action_registry)  || format(',{0}/helm-install-action:{1}', vars.staging_action_registry, cloudbees.version) }}
+        destination: 020229604682.dkr.ecr.us-east-1.amazonaws.com/actions/helm-install-action:${{ cloudbees.scm.sha }}
         context: ${{ cloudbees.workspace }}
         labels: maintainer=sdp-pod-3,email=engineering@cloudbees.com
   install-test:
@@ -74,7 +75,7 @@ jobs:
         labels: |
           cloudbees.io/cleanup: "true"
     - name: install an OCI helm chart with dry-run enabled
-      uses: .
+      uses: ./.cloudbees/testing
       with:
         release-name: nginx-dry-run
         chart-location: oci://registry-1.docker.io/bitnamicharts/nginx
@@ -82,7 +83,7 @@ jobs:
         namespace: ${{ steps.createns.outputs.name }}
         dry-run: 'true'
     - name: install an remote/OCI helm chart
-      uses: .
+      uses: ./.cloudbees/testing
       with:
         release-name: nginx-example
         chart-location: oci://registry-1.docker.io/bitnamicharts/nginx
@@ -93,7 +94,7 @@ jobs:
           service:
             type: ClusterIP
     - name: upgrade an remote/OCI helm chart
-      uses: .
+      uses: ./.cloudbees/testing
       with:
         release-name: nginx-example
         chart-location: oci://registry-1.docker.io/bitnamicharts/nginx
@@ -110,7 +111,7 @@ jobs:
         VAL="$(kubectl get deployment nginx-example -n ${{ steps.createns.outputs.name }} -o jsonpath={.metadata.labels.some-label})"
         [ "$VAL" = 'some-label-value' ]
     - name: install a local helm chart with inline values
-      uses: .
+      uses: ./.cloudbees/testing
       with:
         release-name: example
         chart-location: charts/example
@@ -123,7 +124,7 @@ jobs:
             myproperty: override value
             examplejsonstring: '{"auths":{}}'
     - name: upgrade local chart release with changed values
-      uses: .
+      uses: ./.cloudbees/testing
       with:
         release-name: example
         chart-location: charts/example
@@ -144,7 +145,7 @@ jobs:
     - id: invalid-inline-values
       name: Try to install a helm chart with malformed inline values
       continue-on-error: true
-      uses: .
+      uses: ./.cloudbees/testing
       with:
         release-name: example-invalid-values
         chart-location: charts/example
@@ -156,7 +157,7 @@ jobs:
             asdf:
     - name: install a local helm chart with dependencies and timeout
       continue-on-error: true
-      uses: .
+      uses: ./.cloudbees/testing
       with:
         release-name: example
         chart-location: charts/example_with_dependency
@@ -164,7 +165,7 @@ jobs:
         namespace: ${{ steps.createns.outputs.name }}
         timeout: 5m30s
     - name: install multiple values files
-      uses: .
+      uses: ./.cloudbees/testing
       with:
         release-name: example
         chart-location: charts/example
@@ -174,7 +175,7 @@ jobs:
           charts/example/values.yaml
           charts/example/values-test.yaml
     - name: install a local helm chart with wait set to false
-      uses: .
+      uses: ./.cloudbees/testing
       with:
         release-name: example-deployment
         chart-location: charts/example-deployment
