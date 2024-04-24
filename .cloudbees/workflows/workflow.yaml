@@ -44,6 +44,9 @@ jobs:
         labels: maintainer=sdp-pod-3,email=engineering@cloudbees.com
   install-test:
     needs: build
+    permissions:
+      scm-token-own: read
+      id-token: write
     steps:
     - name: Login to AWS
       uses: https://github.com/cloudbees-io/configure-aws-credentials@v1
