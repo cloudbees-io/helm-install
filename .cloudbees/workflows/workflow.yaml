@@ -46,9 +46,9 @@ jobs:
         username: ${{ secrets.e5bbc3_dockerhub_user }}
         password: ${{ secrets.e5bbc3_dockerhub_password }}
     - name: docker build and publish
-      uses: cloudbees-io/kaniko
+      uses: cloudbees-io/kaniko@v1
       with:
-        destination: 020229604682.dkr.ecr.us-east-1.amazonaws.com/actions/helm-install-action:${{ cloudbees.scm.sha }}
+        destination: 020229604682.dkr.ecr.us-east-1.amazonaws.com/actions/helm-install-action:${{ cloudbees.scm.sha }},020229604682.dkr.ecr.us-east-1.amazonaws.com/actions/helm-install-action:latest
         context: ${{ cloudbees.workspace }}
         labels: maintainer=sdp-pod-3,email=engineering@cloudbees.com
   install-test:
