@@ -1,11 +1,11 @@
-FROM alpine/helm:3.13.3
+FROM alpine/helm:3.14.4
 
 RUN apk update && \
     apk add --no-cache aws-cli yq
 
 RUN apk upgrade --no-cache
 
-ARG SKAFFOLD_VERSION=v2.11.0
+ARG SKAFFOLD_VERSION=v2.12.0
 RUN set -eux; \
 	ARCH="`uname -m | sed 's!x86_64!amd64!; s!aarch64!arm64!'`"; \
 	wget -qO /usr/local/bin/skaffold https://github.com/GoogleContainerTools/skaffold/releases/download/$SKAFFOLD_VERSION/skaffold-linux-$ARCH; \
