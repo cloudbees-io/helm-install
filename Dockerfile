@@ -1,4 +1,4 @@
-FROM alpine/helm:3.15.1
+FROM alpine/helm:3.15.2
 
 RUN apk update && \
     apk add --no-cache yq
