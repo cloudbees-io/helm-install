@@ -60,7 +60,7 @@ runs:
         set -uo pipefail
 
         if echo "${CHART_LOCATION}" | grep -q '^oci://'; then
-          if [ "${CLOUDBEES_REGISTRIES_CONFIG}" -a -s "${CLOUDBEES_REGISTRIES_CONFIG}" ]; then
+          if [ "${CLOUDBEES_REGISTRIES_CONFIG}" ]; then
             chart_location=$(echo -n "${CHART_LOCATION}" | sed 's|^oci://||')
             registry-config --config "${CLOUDBEES_REGISTRIES_CONFIG}" resolve "${chart_location}" resolved_registries.out
             echo "Resolved registries: $(cat resolved_registries.out)"
