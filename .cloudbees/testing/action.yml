@@ -45,6 +45,11 @@ inputs:
   dry-run:
     description: 'Simulate an upgrade, without actually doing it'
     default: 'false'
+  registry-configuration:
+    description: >
+      CloudBees registry configuration file containing the registries to use for loading images.
+      By default it uses the file containing the registries configured under 'Integrations' in the CloudBees platform.
+    default: ${{ cloudbees.registries }}
 runs:
   using: composite
   steps:
@@ -53,6 +58,16 @@ runs:
       uses: docker://020229604682.dkr.ecr.us-east-1.amazonaws.com/actions/helm-install-action:${{ action.scm.sha }}
       run: |
         set -uo pipefail
+
+        resolved_registries="/tmp/resolved_registries.out"
+
+        if echo "${CHART_LOCATION}" | grep -q '^oci://'; then
+          if [ "${CLOUDBEES_REGISTRIES_CONFIG}" ]; then
+            chart_location=$(echo -n "${CHART_LOCATION}" | sed 's|^oci://||')
+            registry-config --config "${CLOUDBEES_REGISTRIES_CONFIG}" resolve "${chart_location}" ${resolved_registries}
+            echo "Resolved registries: $(cat ${resolved_registries})"
+          fi
+        fi
 
         if [ "$ENV_FILE" ]; then
           source "$ENV_FILE"
@@ -116,6 +131,27 @@ runs:
           | .deploy.helm.releases[0].skipBuildDependencies = env(BUILD_DEPENDENCIES) != "true"
           | .deploy.statusCheckDeadlineSeconds = env(TIMEOUT_SECONDS)
           ' /tmp/skaffold/skaffold.yaml
+
+        if [ -s "${resolved_registries}" ]; then
+          findChartInMirrors() {
+            while IFS= read -r chart_location
+            do
+              chart_location=oci://$(echo "$chart_location" | awk -F':' '{print $1}') # strip the tag
+              echo "Verifying chart location: $chart_location by running helm show"
+              if helm show chart "$chart_location" --version "$CHART_VERSION"; then
+                echo "Setting chart location to $chart_location"
+                export CHART_LOCATION="$chart_location"
+                return 0
+              fi
+            done < "${resolved_registries}"
+
+            echo "Failed to find chart in any of the configured registry mirrors" >&2
+            exit 1
+          }
+
+          findChartInMirrors
+        fi
+
         if echo "$CHART_LOCATION" | grep -q '^oci://'; then # remote chart
           yq -i '.
             | .deploy.helm.releases[0].remoteChart = env(CHART_LOCATION)
@@ -177,3 +213,4 @@ runs:
         HELM_NAMESPACE: ${{ inputs.namespace }}
         HELM_MAX_HISTORY: ${{ inputs.max-history }}
         HELM_DEBUG: ${{ inputs.debug == 'true' && 'true' || 'false' }}
+        CLOUDBEES_REGISTRIES_CONFIG: ${{ inputs.registry-configuration }}

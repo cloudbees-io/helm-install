@@ -1,3 +1,5 @@
+FROM public.ecr.aws/l7o7z1g8/services/registry-config:0.0.22 as registry-config
+
 FROM alpine/helm:3.15.2
 
 RUN apk update && \
@@ -21,5 +23,7 @@ RUN set -eux; \
 
 COPY fake-docker.sh /usr/bin/docker
 COPY duration2seconds.sh /usr/local/bin/duration2seconds
+
+COPY --from=registry-config /registry-config /usr/local/bin/registry-config
 
 ENTRYPOINT ["bash"]
