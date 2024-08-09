@@ -45,6 +45,11 @@ inputs:
   dry-run:
     description: 'Simulate an upgrade, without actually doing it'
     default: 'false'
+  registry-configuration:
+    description: >
+      CloudBees registry configuration file containing the registries to use for loading images.
+      By default it uses the file containing the registries configured under 'Integrations' in the CloudBees platform.
+    default: ${{ cloudbees.registries }}
 runs:
   using: composite
   steps:
@@ -53,6 +58,14 @@ runs:
       uses: docker://public.ecr.aws/l7o7z1g8/actions/helm-install-action:${{ action.scm.sha }}
       run: |
         set -uo pipefail
+
+        if echo "${CHART_LOCATION}" | grep -q '^oci://'; then
+          if [ "${CLOUDBEES_REGISTRIES_CONFIG}" -a -s "${CLOUDBEES_REGISTRIES_CONFIG}" ]; then
+            chart_location=$(echo -n "${CHART_LOCATION}" | sed 's|^oci://||')
+            registry-config --config "${CLOUDBEES_REGISTRIES_CONFIG}" resolve "${chart_location}" resolved_registries.out
+            echo "Resolved registries: $(cat resolved_registries.out)"
+          fi
+        fi
 
         if [ "$ENV_FILE" ]; then
           source "$ENV_FILE"
@@ -116,6 +129,32 @@ runs:
           | .deploy.helm.releases[0].skipBuildDependencies = env(BUILD_DEPENDENCIES) != "true"
           | .deploy.statusCheckDeadlineSeconds = env(TIMEOUT_SECONDS)
           ' /tmp/skaffold/skaffold.yaml
+
+        if [ -s resolved_registries.out ]; then
+          cat resolved_registries.out | while read chart_location
+          do
+            chart_location=oci://$(echo "$chart_location" | awk -F':' '{print $1}') # strip the tag
+            echo "Verifying chart location: $chart_location by running helm show"
+            if helm show chart "$chart_location" --version "$CHART_VERSION"; then
+              echo "Setting chart location to $chart_location"
+              export CHART_LOCATION="$chart_location"
+              echo 'success' > /tmp/_status
+              break
+            else
+              echo 'failed' > /tmp/_status
+              continue
+            fi
+          done
+          status=$(cat /tmp/_status)
+          if [ "$status" = 'success' ]; then
+            rm resolved_registries.out /tmp/_status
+          else
+            echo "Failed to resolve any of the provided registry mirrors"
+            rm resolved_registries.out /tmp/_status
+            exit 1
+          fi
+        fi
+
         if echo "$CHART_LOCATION" | grep -q '^oci://'; then # remote chart
           yq -i '.
             | .deploy.helm.releases[0].remoteChart = env(CHART_LOCATION)
@@ -177,3 +216,4 @@ runs:
         HELM_NAMESPACE: ${{ inputs.namespace }}
         HELM_MAX_HISTORY: ${{ inputs.max-history }}
         HELM_DEBUG: ${{ inputs.debug == 'true' && 'true' || 'false' }}
+        CLOUDBEES_REGISTRIES_CONFIG: ${{ inputs.registry-configuration }}
