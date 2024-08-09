@@ -134,16 +134,16 @@ runs:
 
         if [ -s "${resolved_registries}" ]; then
           findChartInMirrors() {
-            cat ${resolved_registries} | while read chart_location
+            while IFS= read -r chart_location
             do
               chart_location=oci://$(echo "$chart_location" | awk -F':' '{print $1}') # strip the tag
               echo "Verifying chart location: $chart_location by running helm show"
               if helm show chart "$chart_location" --version "$CHART_VERSION"; then
                 echo "Setting chart location to $chart_location"
                 export CHART_LOCATION="$chart_location"
-                exit 0
+                return 0
               fi
-            done
+            done < "${resolved_registries}"
 
             echo "Failed to find chart in any of the configured registry mirrors" >&2
             exit 1
