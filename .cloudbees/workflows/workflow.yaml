@@ -159,8 +159,33 @@ jobs:
         values: |
           myobj: malformed
             asdf:
-    - name: install a local helm chart with dependencies and timeout
+    - name: deployment failure
       continue-on-error: true
+      uses: ./.cloudbees/testing
+      with:
+        release-name: example-failure
+        chart-location: charts/example_with_dependency
+        dependency-build: 'true'
+        namespace: ${{ steps.createns.outputs.name }}
+        values: |
+          nginx:
+            customReadinessProbe:
+              initialDelaySeconds: 5
+              timeoutSeconds: 3
+              periodSeconds: 5
+              failureThreshold: 3
+              successThreshold: 1
+              httpGet:
+                path: /invalid
+                port: 8080
+
+    - name: kubectl get events
+      uses: docker://alpine/k8s:1.28.4
+      run: |
+        set -ux
+        kubectl get events -n ${{ steps.createns.outputs.name }}
+
+    - name: install a local helm chart with dependencies and timeout
       uses: ./.cloudbees/testing
       with:
         release-name: example

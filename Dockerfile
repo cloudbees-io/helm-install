@@ -14,7 +14,7 @@ RUN set -eux; \
 	chmod +x /usr/local/bin/skaffold; \
 	skaffold version
 
-ARG K8S_VERSION=v1.29.8
+ARG K8S_VERSION=v1.28.4
 RUN set -eux; \
 	ARCH="`uname -m | sed 's!x86_64!amd64!; s!aarch64!arm64!'`"; \
 	wget -qO /usr/local/bin/kubectl https://dl.k8s.io/release/$K8S_VERSION/bin/linux/$ARCH/kubectl; \
