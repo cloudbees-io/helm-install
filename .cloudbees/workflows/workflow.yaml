@@ -178,6 +178,8 @@ jobs:
               httpGet:
                 path: /invalid
                 port: 8080
+      env:
+        SKAFFOLD_VERBOSITY: debug
 
     - name: kubectl get events
       uses: docker://alpine/k8s:1.28.4
