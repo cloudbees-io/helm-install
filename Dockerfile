@@ -2,10 +2,11 @@ FROM public.ecr.aws/l7o7z1g8/services/registry-config:0.0.22 as registry-config
 
 FROM alpine/helm:3.16.1
 
-RUN apk update && \
+RUN <<EOF
+    apk update && 
     apk add --no-cache yq
-
-RUN apk upgrade --no-cache
+    apk upgrade --no-cache
+EOF
 
 ARG SKAFFOLD_VERSION=v2.13.2
 RUN set -eux; \
@@ -20,6 +21,9 @@ RUN set -eux; \
 	wget -qO /usr/local/bin/kubectl https://dl.k8s.io/release/$K8S_VERSION/bin/linux/$ARCH/kubectl; \
 	chmod +x /usr/local/bin/kubectl; \
 	kubectl version --client
+
+## # Remove wget - CVE-2024-38428 
+RUN apk del wget
 
 COPY fake-docker.sh /usr/bin/docker
 COPY duration2seconds.sh /usr/local/bin/duration2seconds
