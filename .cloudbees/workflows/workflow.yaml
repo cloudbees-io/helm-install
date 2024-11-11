@@ -109,7 +109,7 @@ jobs:
           commonLabels:
             some-label: some-label-value
     - name: verify remote/OCI chart release was upgraded
-      uses: docker://alpine/k8s:1.27.3
+      uses: docker://alpine/k8s:1.31.2
       run: |
         set -ux
         VAL="$(kubectl get deployment nginx-example -n ${{ steps.createns.outputs.name }} -o jsonpath={.metadata.labels.some-label})"
@@ -141,7 +141,7 @@ jobs:
             myproperty: changed value
             examplejsonstring: '{"auths":{}}'
     - name: verify local chart release was upgraded
-      uses: docker://alpine/k8s:1.27.3
+      uses: docker://alpine/k8s:1.31.2
       run: |
         set -ux
         VAL="$(kubectl get cm example -n ${{ steps.createns.outputs.name }} -o jsonpath={.data.key})"
