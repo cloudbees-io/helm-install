@@ -199,7 +199,7 @@ runs:
           cd /tmp/skaffold
           skaffold config set collect-metrics false
           skaffold deploy
-         
+
           if [ $? -eq 0 ]; then
             # Publish Artifact Info on success
             response=$(curl -i -X 'POST' "$CLOUDBEES_API_URL/v2/workflows/runs/artifactinfos" \
@@ -213,7 +213,7 @@ runs:
               }" \
               -H "Authorization: Bearer $CLOUDBEES_API_TOKEN" \
               -H 'Content-Type: application/json') || command_failed=1
-          
+
             # Check if the command failed
             if [ ${command_failed:-0} -eq 1 ]; then
               echo "WARNING: Publish Artifact Info failed with response '$response'"

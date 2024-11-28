@@ -199,6 +199,26 @@ runs:
           cd /tmp/skaffold
           skaffold config set collect-metrics false
           skaffold deploy
+
+          if [ $? -eq 0 ]; then
+            # Publish Artifact Info on success
+            response=$(curl -i -X 'POST' "$CLOUDBEES_API_URL/v2/workflows/runs/artifactinfos" \
+              -d "{
+                \"runId\": \"$CLOUDBEES_RUN_ID\",
+                \"runAttempt\": \"$CLOUDBEES_RUN_ATTEMPT\",
+                \"name\": \"$RELEASE_NAME\",
+                \"url\": \"$CHART_LOCATION\",
+                \"version\": \"$CHART_VERSION\",
+                \"type\": \"deploy\"
+              }" \
+              -H "Authorization: Bearer $CLOUDBEES_API_TOKEN" \
+              -H 'Content-Type: application/json') || command_failed=1
+
+            # Check if the command failed
+            if [ ${command_failed:-0} -eq 1 ]; then
+              echo "WARNING: Publish Artifact Info failed with response '$response'"
+            fi
+          fi
         fi
       env:
         CHART_LOCATION: ${{ inputs.chart-location }}
@@ -214,3 +234,7 @@ runs:
         HELM_MAX_HISTORY: ${{ inputs.max-history }}
         HELM_DEBUG: ${{ inputs.debug == 'true' && 'true' || 'false' }}
         CLOUDBEES_REGISTRIES_CONFIG: ${{ inputs.registry-configuration }}
+        CLOUDBEES_API_URL: ${{ cloudbees.api.url }}
+        CLOUDBEES_API_TOKEN: ${{ cloudbees.api.token }}
+        CLOUDBEES_RUN_ID: ${{ cloudbees.run_id }}
+        CLOUDBEES_RUN_ATTEMPT: ${{ cloudbees.run_attempt }}
