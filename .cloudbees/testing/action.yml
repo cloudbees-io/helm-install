@@ -210,60 +210,60 @@ runs:
             for line in $chart_info; do
               chart_name=$(echo "$line" | awk -F'-' '{print $1}')
               chart_version=$(echo "$line" | awk -F'-' '{print $2}')
-         
+          
               echo "Saving artifact information for chart $line"
-
-            # Construct the PURL for the chart
-            purl=""        
-            if [[ "$CHART_LOCATION" =~ ^oci:// ]]; then
-              type="oci"
-              # Remove the "oci://" prefix to match PURL format
-              CHART_LOCATION="${CHART_LOCATION/oci:\/\//}"
-            elif [[ "$CHART_LOCATION" =~ \.tgz$ ]]; then
-              type="tgz"
-            elif [[ -d "$CHART_LOCATION" ]]; then
-              type="localdir"
-              # Remove the leading slash to match PURL format 
-              CHART_LOCATION="${CHART_LOCATION#/}"
-            else
-              echo "WARN: Unsupported URL type: $CHART_LOCATION"
-              type="unknown"
-              purl=$CHART_LOCATION
-            fi
-
-            if [ "$type" != "unknown" ]; then             
-              # Map the type to a PURL format
-              declare -A type_map=(
-                ["oci"]="pkg:oci/%s"
-                ["tgz"]="pkg:tgz/%s"
-                ["localdir"]="pkg:dir/%s"
-              )
-
-              # Add the version to the PURL if it exists
-              if [ -n "$CHART_VERSION" ]; then
-                purl=$(printf "${type_map[$type]}" "$CHART_LOCATION@$CHART_VERSION")
+  
+              # Construct the PURL for the chart
+              purl=""        
+              if [[ "$CHART_LOCATION" =~ ^oci:// ]]; then
+                type="oci"
+                # Remove the "oci://" prefix to match PURL format
+                CHART_LOCATION="${CHART_LOCATION/oci:\/\//}"
+              elif [[ "$CHART_LOCATION" =~ \.tgz$ ]]; then
+                type="tgz"
+              elif [[ -d "$CHART_LOCATION" ]]; then
+                type="localdir"
+                # Remove the leading slash to match PURL format 
+                CHART_LOCATION="${CHART_LOCATION#/}"
               else
-                purl=$(printf "${type_map[$type]}" "$CHART_LOCATION")
+                echo "WARN: Unsupported URL type: $CHART_LOCATION"
+                type="unknown"
+                purl=$CHART_LOCATION
               fi
-            fi
-
-            response=$(curl -i -X 'POST' "$CLOUDBEES_API_URL/v2/workflows/runs/artifactinfos" \
-              -d "{
-                \"runId\": \"$CLOUDBEES_RUN_ID\",
-                \"runAttempt\": \"$CLOUDBEES_RUN_ATTEMPT\",
-                \"name\": \"$chart_name\",
-                \"url\": \"$purl\",
+  
+              if [ "$type" != "unknown" ]; then             
+                # Map the type to a PURL format
+                declare -A type_map=(
+                  ["oci"]="pkg:oci/%s"
+                  ["tgz"]="pkg:tgz/%s"
+                  ["localdir"]="pkg:dir/%s"
+                )
+  
+                # Add the version to the PURL if it exists
+                if [ -n "$CHART_VERSION" ]; then
+                  purl=$(printf "${type_map[$type]}" "$CHART_LOCATION@$CHART_VERSION")
+                else
+                  purl=$(printf "${type_map[$type]}" "$CHART_LOCATION")
+                fi
+              fi
+  
+              response=$(curl -i -X 'POST' "$CLOUDBEES_API_URL/v2/workflows/runs/artifactinfos" \
+                -d "{
+                  \"runId\": \"$CLOUDBEES_RUN_ID\",
+                  \"runAttempt\": \"$CLOUDBEES_RUN_ATTEMPT\",
+                  \"name\": \"$chart_name\",
+                  \"url\": \"$purl\",
                   \"version\": \"$chart_version\",
-                \"type\": \"DEPLOYED\"
-              }" \
-              -H "Authorization: Bearer $CLOUDBEES_API_TOKEN" \
-              -H 'Content-Type: application/json') || command_failed=1
-
-            # Check if the command failed
-            if [ ${command_failed:-0} -eq 1 ]; then
-              echo "WARN: failed to save artifact information: '$response'"
-            fi
-           done
+                  \"type\": \"DEPLOYED\"
+                }" \
+                -H "Authorization: Bearer $CLOUDBEES_API_TOKEN" \
+                -H 'Content-Type: application/json') || command_failed=1
+  
+              # Check if the command failed
+              if [ ${command_failed:-0} -eq 1 ]; then
+                echo "WARN: failed to save artifact information: '$response'"
+              fi
+            done
           fi
         fi
       env:

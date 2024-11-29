@@ -263,7 +263,7 @@ runs:
               if [ ${command_failed:-0} -eq 1 ]; then
                 echo "WARN: failed to save artifact information: '$response'"
               fi
-           done
+            done
           fi
         fi
       env:
