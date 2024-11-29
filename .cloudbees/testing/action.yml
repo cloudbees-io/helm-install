@@ -214,7 +214,7 @@ runs:
             elif [[ -d "$CHART_LOCATION" ]]; then
               type="localdir"
               # Remove the leading slash to match PURL format 
-              CHART_LOCATION="${CHART_LOCATION#/}
+              CHART_LOCATION="${CHART_LOCATION#/}"
             else
               echo "WARN: Unsupported URL type: $CHART_LOCATION"
               purl=$CHART_LOCATION
