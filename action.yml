@@ -205,6 +205,7 @@ runs:
             skaffold render > rendered.yaml
             # Extract the unique chart names and versions from the rendered.yaml
             chart_info=$(yq '.metadata.labels["helm.sh/chart"]' "rendered.yaml" | grep -v '^$' | grep -v 'null' | sort -u)
+            echo "Extracted chart information: $chart_info\n"
         
             # Save the artifact information for each chart
             for line in $chart_info; do
@@ -213,38 +214,32 @@ runs:
           
               echo "Saving artifact information for chart $line"
   
-              # Construct the PURL for the chart
-              purl=""        
+              # Construct the PURL for the chart      
               if [[ "$CHART_LOCATION" =~ ^oci:// ]]; then
                 type="oci"
                 # Remove the "oci://" prefix to match PURL format
                 CHART_LOCATION="${CHART_LOCATION/oci:\/\//}"
               elif [[ "$CHART_LOCATION" =~ \.tgz$ ]]; then
                 type="tgz"
-              elif [[ -d "$CHART_LOCATION" ]]; then
+              else 
                 type="localdir"
                 # Remove the leading slash to match PURL format 
                 CHART_LOCATION="${CHART_LOCATION#/}"
-              else
-                echo "WARN: Unsupported URL type: $CHART_LOCATION"
-                type="unknown"
-                purl=$CHART_LOCATION
               fi
   
-              if [ "$type" != "unknown" ]; then             
-                # Map the type to a PURL format
-                declare -A type_map=(
-                  ["oci"]="pkg:oci/%s"
-                  ["tgz"]="pkg:tgz/%s"
-                  ["localdir"]="pkg:dir/%s"
-                )
-  
-                # Add the version to the PURL if it exists
-                if [ -n "$CHART_VERSION" ]; then
-                  purl=$(printf "${type_map[$type]}" "$CHART_LOCATION@$CHART_VERSION")
-                else
-                  purl=$(printf "${type_map[$type]}" "$CHART_LOCATION")
-                fi
+              # Map the type to a PURL format
+              declare -A type_map=(
+                ["oci"]="pkg:oci/%s"
+                ["tgz"]="pkg:tgz/%s"
+                ["localdir"]="pkg:dir/%s"
+              )
+
+              purl=""  
+              # Add the version to the PURL if it exists
+              if [ -n "$CHART_VERSION" ]; then
+                purl=$(printf "${type_map[$type]}" "$CHART_LOCATION@$CHART_VERSION")
+              else
+                purl=$(printf "${type_map[$type]}" "$CHART_LOCATION")
               fi
   
               response=$(curl -i -X 'POST' "$CLOUDBEES_API_URL/v2/workflows/runs/artifactinfos" \
