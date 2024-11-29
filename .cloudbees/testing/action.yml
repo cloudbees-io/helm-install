@@ -201,22 +201,56 @@ runs:
           skaffold deploy
 
           if [ $? -eq 0 ]; then
-            # Publish Artifact Info on success
+            echo "Saving artifact information for chart  $CHART_NAME"
+
+            # Construct the PURL for the chart
+            purl=""        
+            if [[ "$CHART_LOCATION" =~ ^oci:// ]]; then
+              type="oci"
+              # Remove the "oci://" prefix to match PURL format
+              CHART_LOCATION="${CHART_LOCATION/oci:\/\//}"
+            elif [[ "$CHART_LOCATION" =~ \.tgz$ ]]; then
+              type="tgz"
+            elif [[ -d "$CHART_LOCATION" ]]; then
+              type="localdir"
+              # Remove the leading slash to match PURL format 
+              CHART_LOCATION="${CHART_LOCATION#/}
+            else
+              echo "WARN: Unsupported URL type: $CHART_LOCATION"
+              purl=$CHART_LOCATION
+            fi
+
+            if [ -n "$type" ]; then             
+              # Map the type to a PURL format
+              declare -A type_map=(
+                ["oci"]="pkg:oci/%s"
+                ["tgz"]="pkg:tgz/%s"
+                ["localdir"]="pkg:dir/%s"
+              )
+
+              # Add the version to the PURL if it exists
+              if [ -n "$CHART_VERSION" ]; then
+                purl=$(printf "${type_map[$type]}" "$CHART_LOCATION@$CHART_VERSION")
+              else
+                purl=$(printf "${type_map[$type]}" "$CHART_LOCATION")
+              fi
+            fi
+
             response=$(curl -i -X 'POST' "$CLOUDBEES_API_URL/v2/workflows/runs/artifactinfos" \
               -d "{
                 \"runId\": \"$CLOUDBEES_RUN_ID\",
                 \"runAttempt\": \"$CLOUDBEES_RUN_ATTEMPT\",
-                \"name\": \"$RELEASE_NAME\",
-                \"url\": \"$CHART_LOCATION\",
+                \"name\": \"$CHART_NAME\",
+                \"url\": \"$purl\",
                 \"version\": \"$CHART_VERSION\",
-                \"type\": \"deploy\"
+                \"type\": \"DEPLOYED\"
               }" \
               -H "Authorization: Bearer $CLOUDBEES_API_TOKEN" \
               -H 'Content-Type: application/json') || command_failed=1
 
             # Check if the command failed
             if [ ${command_failed:-0} -eq 1 ]; then
-              echo "WARNING: Publish Artifact Info failed with response '$response'"
+              echo "WARN: failed to save artifact information: '$response'"
             fi
           fi
         fi
