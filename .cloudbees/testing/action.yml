@@ -200,13 +200,15 @@ runs:
           skaffold config set collect-metrics false
           skaffold deploy
 
+          echo "Checking if the chart was successfully installed"
           if [ $? -eq 0 ]; then
             skaffold render > rendered.yaml
-
+            echo "Successfully rendered the chart"
             # Extract the unique chart names and versions from the rendered.yaml
             chart_info=$(yq '.metadata.labels["helm.sh/chart"]' "rendered.yaml" | grep -v '^$' | grep -v 'null' | grep -v "\-\-\-" | sort -u)
             echo "Extracted chart information: $chart_info"
 
+            set -x # Enable debug mode
             # Save the artifact information for each chart
             for line in $chart_info; do
               chart_name=$(echo "$line" | awk -F'-' '{print $1}')
@@ -242,7 +244,7 @@ runs:
                 purl=$(printf "${type_map[$type]}" "$CHART_LOCATION")
               fi
   
-              response=$(curl -i -X 'POST' "$CLOUDBEES_API_URL/v2/workflows/runs/artifactinfos" \
+              response=$(curl -sS -i -X 'POST' "$CLOUDBEES_API_URL/v2/workflows/runs/artifactinfos" \
                 -d "{
                   \"runId\": \"$CLOUDBEES_RUN_ID\",
                   \"runAttempt\": \"$CLOUDBEES_RUN_ATTEMPT\",
