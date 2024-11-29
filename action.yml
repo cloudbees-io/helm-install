@@ -201,17 +201,22 @@ runs:
           skaffold deploy
 
           if [ $? -eq 0 ]; then
-            
+            echo "Helm release $RELEASE_NAME installed successfully"
+
             skaffold render > rendered.yaml
+            printf "------rendered.yaml------- \n"
+            cat rendered.yaml
+            printf "------rendered.yaml--------\n"
+
             # Extract the unique chart names and versions from the rendered.yaml
             chart_info=$(yq '.metadata.labels["helm.sh/chart"]' "rendered.yaml" | grep -v '^$' | grep -v 'null' | sort -u)
-            echo "Extracted chart information: $chart_info\n"
-        
+            echo "Extracted chart information: $chart_info"
+
             # Save the artifact information for each chart
             for line in $chart_info; do
               chart_name=$(echo "$line" | awk -F'-' '{print $1}')
               chart_version=$(echo "$line" | awk -F'-' '{print $2}')
-          
+
               echo "Saving artifact information for chart $line"
   
               # Construct the PURL for the chart      
