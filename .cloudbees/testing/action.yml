@@ -202,6 +202,13 @@ runs:
 
           if [ $? -eq 0 ]; then
             echo "Saving artifact information for chart  $CHART_NAME"
+         
+            skaffold render > rendered.yaml
+            chart_info=$(yq '.metadata.labels["helm.sh/chart"]' rendered.yaml)
+            chart_name=$(echo "$chart_info" | awk -F'-' '{print $1}')
+            chart_version=$(echo "$chart_info" | awk -F'-' '{print $2}')
+            echo "Chart name: $chart_name"
+            echo "Chart version: $chart_version"
 
             # Construct the PURL for the chart
             purl=""        
@@ -240,7 +247,7 @@ runs:
               -d "{
                 \"runId\": \"$CLOUDBEES_RUN_ID\",
                 \"runAttempt\": \"$CLOUDBEES_RUN_ATTEMPT\",
-                \"name\": \"$CHART_NAME\",
+                \"name\": \"$chart_name\",
                 \"url\": \"$purl\",
                 \"version\": \"$CHART_VERSION\",
                 \"type\": \"DEPLOYED\"
