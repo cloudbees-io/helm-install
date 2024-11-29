@@ -204,12 +204,10 @@ runs:
             echo "Helm release $RELEASE_NAME installed successfully"
 
             skaffold render > rendered.yaml
-            printf "------rendered.yaml------- \n"
             cat rendered.yaml
-            printf "------rendered.yaml--------\n"
 
             # Extract the unique chart names and versions from the rendered.yaml
-            chart_info=$(yq '.metadata.labels["helm.sh/chart"]' "rendered.yaml" | grep -v '^$' | grep -v 'null' | sort -u)
+            chart_info=$(yq '.metadata.labels["helm.sh/chart"]' "rendered.yaml" | grep -v '^$' | grep -v 'null' | grep -v '---' | sort -u)
             echo "Extracted chart information: $chart_info"
 
             # Save the artifact information for each chart
