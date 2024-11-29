@@ -203,18 +203,18 @@ runs:
           if [ $? -eq 0 ]; then
             skaffold render > rendered.yaml
         
-            chart_info=""
+            chart_infos=""
             if yq -e '.metadata.labels["helm.sh/chart"]' "rendered.yaml" > /dev/null 2>&1; then
               # Extract the unique chart names and versions from the rendered.yaml
-              chart_info=$(yq '.metadata.labels["helm.sh/chart"]' "rendered.yaml" | grep -v '^$' | grep -v 'null' | grep -v "\-\-\-" | sort -u)
+              chart_infos=$(yq '.metadata.labels["helm.sh/chart"]' "rendered.yaml" | grep -v '^$' | grep -v 'null' | grep -v "\-\-\-" | sort -u)
             fi
 
             # Save the artifact information for each chart
-            for line in $chart_info; do
-              chart_name=$(echo "$line" | sed 's/-[^-]*$//')
-              chart_version=$(echo "$line" | sed 's/.*-//')
+            for info in $chart_infos; do
+              chart_name=$(echo "$info" | sed 's/-[^-]*$//')
+              chart_version=$(echo "$info" | sed 's/.*-//')
 
-              echo "Saving artifact information for chart $line"
+              echo "Saving artifact information for chart $info"
   
               # Construct the PURL for the chart      
               if [[ "$CHART_LOCATION" =~ ^oci:// ]]; then
