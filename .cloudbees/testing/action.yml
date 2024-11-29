@@ -211,8 +211,8 @@ runs:
 
             # Save the artifact information for each chart
             for line in $chart_info; do
-              chart_name=$(echo "$line" | awk -F'-' '{print $1}')
-              chart_version=$(echo "$line" | awk -F'-' '{print $2}')
+              chart_name=$(echo "$line" | sed 's/-[^-]*$//')
+              chart_version=$(echo "$line" | sed 's/.*-//')
 
               echo "Saving artifact information for chart $line"
   
@@ -238,8 +238,8 @@ runs:
 
               purl=""  
               # Add the version to the PURL if it exists
-              if [ -n "$CHART_VERSION" ]; then
-                purl=$(printf "${type_map[$type]}" "$CHART_LOCATION@$CHART_VERSION")
+              if [ -n "$chart_version" ]; then
+                purl=$(printf "${type_map[$type]}" "$CHART_LOCATION@$chart_version")
               else
                 purl=$(printf "${type_map[$type]}" "$CHART_LOCATION")
               fi
