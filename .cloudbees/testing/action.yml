@@ -201,18 +201,17 @@ runs:
           skaffold deploy
 
           if [ $? -eq 0 ]; then
+            
             skaffold render > rendered.yaml
+            # Extract the unique chart names and versions from the rendered.yaml
+            chart_info=$(yq '.metadata.labels["helm.sh/chart"]' "rendered.yaml" | grep -v '^$' | grep -v 'null' | sort -u)
         
-            # Temporary workaround to extract chart name and version from the rendered yaml
-            cat rendered.yaml
+            # Save the artifact information for each chart
+            for line in $chart_info; do
+              chart_name=$(echo "$line" | awk -F'-' '{print $1}')
+              chart_version=$(echo "$line" | awk -F'-' '{print $2}')
          
-            chart_info=$(yq '.metadata.labels["helm.sh/chart"]' rendered.yaml)
-            chart_name=$(echo "$chart_info" | awk -F'-' '{print $1}')
-            chart_version=$(echo "$chart_info" | awk -F'-' '{print $2}')
-            echo "Chart name: $chart_name"
-            echo "Chart version: $chart_version"
-        
-            echo "Saving artifact information for chart  $chart_name"
+              echo "Saving artifact information for chart $line"
 
             # Construct the PURL for the chart
             purl=""        
@@ -254,7 +253,7 @@ runs:
                 \"runAttempt\": \"$CLOUDBEES_RUN_ATTEMPT\",
                 \"name\": \"$chart_name\",
                 \"url\": \"$purl\",
-                \"version\": \"$CHART_VERSION\",
+                  \"version\": \"$chart_version\",
                 \"type\": \"DEPLOYED\"
               }" \
               -H "Authorization: Bearer $CLOUDBEES_API_TOKEN" \
@@ -264,6 +263,7 @@ runs:
             if [ ${command_failed:-0} -eq 1 ]; then
               echo "WARN: failed to save artifact information: '$response'"
             fi
+           done
           fi
         fi
       env:
