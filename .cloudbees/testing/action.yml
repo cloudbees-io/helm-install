@@ -202,6 +202,9 @@ runs:
 
           if [ $? -eq 0 ]; then
             skaffold render > rendered.yaml
+        
+            # Temporary workaround to extract chart name and version from the rendered yaml
+            cat rendered.yaml
          
             chart_info=$(yq '.metadata.labels["helm.sh/chart"]' rendered.yaml)
             chart_name=$(echo "$chart_info" | awk -F'-' '{print $1}')
@@ -225,10 +228,11 @@ runs:
               CHART_LOCATION="${CHART_LOCATION#/}"
             else
               echo "WARN: Unsupported URL type: $CHART_LOCATION"
+              type="unknown"
               purl=$CHART_LOCATION
             fi
 
-            if [ -n "$type" ]; then             
+            if [ "$type" != "unknown" ]; then             
               # Map the type to a PURL format
               declare -A type_map=(
                 ["oci"]="pkg:oci/%s"
