@@ -201,14 +201,15 @@ runs:
           skaffold deploy
 
           if [ $? -eq 0 ]; then
-            echo "Saving artifact information for chart  $CHART_NAME"
-         
             skaffold render > rendered.yaml
+         
             chart_info=$(yq '.metadata.labels["helm.sh/chart"]' rendered.yaml)
             chart_name=$(echo "$chart_info" | awk -F'-' '{print $1}')
             chart_version=$(echo "$chart_info" | awk -F'-' '{print $2}')
             echo "Chart name: $chart_name"
             echo "Chart version: $chart_version"
+        
+            echo "Saving artifact information for chart  $chart_name"
 
             # Construct the PURL for the chart
             purl=""        
