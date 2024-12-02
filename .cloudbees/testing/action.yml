@@ -214,8 +214,9 @@ runs:
               helm_version=$(yq -e '.metadata.labels."helm.sh/chart"' "rendered.yaml" | grep -v '^null$' | grep -v '^$' | grep -v '\-\-\-' | sort -u)
             fi
         
-            echo "Saving artifact information for chart $CHART_LOCATION"
-            echo "Container images: $container_images"
+            if [ -n "$container_images" ]; then
+              echo "Saving artifact information for chart $CHART_LOCATION"
+            fi
         
             # Save the artifact information for each chart
             for info in $container_images; do
@@ -226,7 +227,7 @@ runs:
               purl=""
               if [[ "$CHART_LOCATION" =~ ^oci:// ]]; then
                 # OCI image format
-                sha256_digest=$(helm pull "$CHART_LOCATION" 2>&1 | grep 'Digest:' | sed 's/Digest: sha256://' || echo "")
+                sha256_digest=$(helm pull "$CHART_LOCATION" 2>&1 | grep 'Digest:' | sed 's/Digest: //' || echo "" )
                 if [ -n "$sha256_digest" ]; then
                     purl="pkg:$CHART_LOCATION@$sha256_digest"
                 fi
@@ -236,7 +237,6 @@ runs:
                 # Handle non-OCI images
                 purl="$CHART_LOCATION:$helm_version"
               fi
-              echo "Artifact information: $image_name:$image_version $purl"
               response=$(curl -sS -i -X 'POST' "$CLOUDBEES_API_URL/v2/workflows/runs/artifactinfos" \
                 -d "{
                   \"runId\": \"$CLOUDBEES_RUN_ID\",
