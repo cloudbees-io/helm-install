@@ -208,10 +208,8 @@ runs:
               # Extract the unique container images from the rendered chart
               container_images=$(yq '.spec.template.spec.containers[].image' "rendered.yaml" | sort -u)
             fi
-
-            echo "Saving artifact information for chart $CHART_LOCATION"
         
-            kubectl version
+            echo "Saving artifact information for chart $CHART_LOCATION and version $CHART_VERSION"
         
             # Save the artifact information for each chart
             for info in $container_images; do
@@ -219,30 +217,19 @@ runs:
               image_name=$(echo "$info" | sed 's/:.*//')
               image_version=$(echo "$info" | sed 's/.*://')
         
-              # Determine the PURL for the image using helm pull
               purl=""
-              if [[ "$info" =~ ^oci:// ]]; then
+              if [ "$CHART_LOCATION" =~ ^oci:// ]; then
                 # OCI image format
-                echo "Using helm pull for OCI image $info"
-                sha256_digest=$(helm pull "$image_name" --version "$image_version" 2>/dev/null | grep 'Digest:' | sed 's/Digest: sha256://' || echo "")
+                sha256_digest=$(helm pull "$CHART_LOCATION" 2>&1 | grep 'Digest:' | sed 's/Digest: sha256://' || echo "")
                 if [ -n "$sha256_digest" ]; then
-                    purl="pkg:oci/$image_name@$sha256_digest"
-                else
-                    echo "WARN: Unable to fetch sha256 for $info"
-                    continue
+                    purl="pkg:$CHART_LOCATION@$sha256_digest"
                 fi
-              else
+              fi
+        
+              if [ -z "$purl" ]; then
                 # Handle non-OCI images
-                echo "Using docker pull for non-OCI image $info"
-                if [ -z "$image_version" ]; then
-                    image_version="latest"
-                fi
-                sha256_digest=$(docker pull "$info" 2>/dev/null | grep 'Digest:' | sed 's/Digest: sha256://' || echo "")
-                if [ -n "$sha256_digest" ]; then
-                    purl="pkg:oci/$image_name@$sha256_digest"
-                else
-                    purl="pkg:oci/$image_name@$image_version"
-                fi
+                version="${CHART_VERSION:-latest}"
+                purl="$CHART_LOCATION:$version"
               fi
               
               response=$(curl -sS -i -X 'POST' "$CLOUDBEES_API_URL/v2/workflows/runs/artifactinfos" \
