@@ -218,7 +218,7 @@ runs:
               image_version=$(echo "$info" | sed 's/.*://')
         
               purl=""
-              if [ "$CHART_LOCATION" =~ ^oci:// ]; then
+              if [[ "$CHART_LOCATION" =~ ^oci:// ]]; then
                 # OCI image format
                 sha256_digest=$(helm pull "$CHART_LOCATION" 2>&1 | grep 'Digest:' | sed 's/Digest: sha256://' || echo "")
                 if [ -n "$sha256_digest" ]; then
