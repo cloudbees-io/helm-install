@@ -214,7 +214,7 @@ runs:
               helm_version=$(yq -e '.metadata.labels."helm.sh/chart" // empty' "rendered.yaml" | grep -v '^null$' | grep -v '^$' | sort -u)
             fi
         
-            echo "Saving artifact information for chart $CHART_LOCATION and version $CHART_VERSION"
+            echo "Saving artifact information for chart $CHART_LOCATION"
         
             # Save the artifact information for each chart
             for info in $container_images; do
