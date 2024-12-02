@@ -211,8 +211,6 @@ runs:
 
             echo "Saving artifact information for chart $CHART_LOCATION"
         
-            skopeo --version
-            docker --version
             kubectl version
         
             # Save the artifact information for each chart
