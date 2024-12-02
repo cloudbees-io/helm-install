@@ -211,7 +211,7 @@ runs:
             
             helm_version=$CHART_VERSION
             if [ -z "$helm_version" ] && yq -e '.metadata.labels."helm.sh/chart"' "rendered.yaml" > /dev/null 2>&1; then 
-              helm_version=$(yq -e '.metadata.labels."helm.sh/chart"' "rendered.yaml" | grep -v '^null$' | grep -v '^$' | sort -u)
+              helm_version=$(yq -e '.metadata.labels."helm.sh/chart"' "rendered.yaml" | grep -v '^null$' | grep -v '^$' | grep -v '\-\-\-' | sort -u)
             fi
         
             echo "Saving artifact information for chart $CHART_LOCATION"
