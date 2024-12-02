@@ -209,9 +209,14 @@ runs:
               container_images=$(yq '.spec.template.spec.containers[].image' "rendered.yaml" | sort -u)
             fi
 
+            echo "Saving artifact information for chart $CHART_LOCATION"
+        
+            skopeo --version
+            docker --version
+            kubectl version
+        
             # Save the artifact information for each chart
             for info in $container_images; do
-              echo "Saving artifact information for chart $CHART_LOCATION"
         
               image_name=$(echo "$info" | sed 's/:.*//')
               image_version=$(echo "$info" | sed 's/.*://')
