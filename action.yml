@@ -208,6 +208,11 @@ runs:
               # Extract the unique container images from the rendered chart
               container_images=$(yq '.spec.template.spec.containers[].image' "rendered.yaml" | sort -u)
             fi
+            
+            helm_version=$CHART_VERSION
+            if [ -n "$helm_version" ] && yq -e '.metadata.labels."helm.sh/chart"' "rendered.yaml" > /dev/null 2>&1; then 
+              helm_version=$(yq -e '.metadata.labels."helm.sh/chart" // empty' "rendered.yaml" | grep -v '^null$' | grep -v '^$' | sort -u)
+            fi
         
             echo "Saving artifact information for chart $CHART_LOCATION and version $CHART_VERSION"
         
@@ -228,8 +233,7 @@ runs:
         
               if [ -z "$purl" ]; then
                 # Handle non-OCI images
-                version="${CHART_VERSION:-latest}"
-                purl="$CHART_LOCATION:$version"
+                purl="$CHART_LOCATION:$helm_version"
               fi
               
               response=$(curl -sS -i -X 'POST' "$CLOUDBEES_API_URL/v2/workflows/runs/artifactinfos" \
