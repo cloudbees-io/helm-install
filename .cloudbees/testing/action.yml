@@ -211,10 +211,10 @@ runs:
             
             helm_version=$CHART_VERSION
             if [ -z "$helm_version" ] && yq -e '.metadata.labels."helm.sh/chart"' "rendered.yaml" > /dev/null 2>&1; then 
-              helm_version=$(yq -e '.metadata.labels."helm.sh/chart" // empty' "rendered.yaml" | grep -v '^null$' | grep -v '^$' | sort -u)
+              helm_version=$(yq -e '.metadata.labels."helm.sh/chart"' "rendered.yaml" | grep -v '^null$' | grep -v '^$' | sort -u)
             fi
         
-            echo "Saving artifact information for chart $CHART_LOCATION and version $helm_version"
+            echo "Saving artifact information for chart $CHART_LOCATION"
         
             # Save the artifact information for each chart
             for info in $container_images; do
@@ -225,9 +225,7 @@ runs:
               purl=""
               if [[ "$CHART_LOCATION" =~ ^oci:// ]]; then
                 # OCI image format
-                echo "Extracting sha256 digest for $CHART_LOCATION"
                 sha256_digest=$(helm pull "$CHART_LOCATION" 2>&1 | grep 'Digest:' | sed 's/Digest: sha256://' || echo "")
-                echo "Extracted sha256 digest: $sha256_digest"
                 if [ -n "$sha256_digest" ]; then
                     purl="pkg:$CHART_LOCATION@$sha256_digest"
                 fi
