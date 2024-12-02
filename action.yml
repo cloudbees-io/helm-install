@@ -215,6 +215,7 @@ runs:
             fi
         
             echo "Saving artifact information for chart $CHART_LOCATION"
+            echo "Container images: $container_images"
         
             # Save the artifact information for each chart
             for info in $container_images; do
@@ -235,7 +236,7 @@ runs:
                 # Handle non-OCI images
                 purl="$CHART_LOCATION:$helm_version"
               fi
-              
+              echo "Artifact information: $image_name:$image_version $purl"
               response=$(curl -sS -i -X 'POST' "$CLOUDBEES_API_URL/v2/workflows/runs/artifactinfos" \
                 -d "{
                   \"runId\": \"$CLOUDBEES_RUN_ID\",
