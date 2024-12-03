@@ -213,11 +213,11 @@ runs:
             if [ -z "$helm_version" ] && yq -e '.metadata.labels."helm.sh/chart"' "rendered.yaml" > /dev/null 2>&1; then
               echo "TMP:"
               ls -la /tmp/
-              echo "CHART_LOCATION: $CHART_LOCATION"
-              ls -la $CHART_LOCATION
+              echo "CHART_PATH: $CHART_PATH"
+              ls -la $CHART_PATH
               chartArtifactDir="/tmp/helm-chart-artifact"
-              echo "Packaging chart $CHART_LOCATION"
-              if helm package $CHART_LOCATION --destination "$chartArtifactDir"; then
+              echo "Packaging chart $CHART_PATH"
+              if helm package $CHART_PATH --destination "$chartArtifactDir"; then
                 artifactPath=$(ls -Art "$chartArtifactDir"/*.tgz | tail -n 1)
                 echo "Artifact path: $artifactPath"
                 if [ -f "$artifactPath" ]; then
