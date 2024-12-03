@@ -202,39 +202,30 @@ runs:
 
           if [ $? -eq 0 ]; then
             skaffold render > rendered.yaml
-        
-            container_images=""
+
             if yq -e '.spec.template.spec.containers[]?.image' "rendered.yaml" > /dev/null 2>&1; then
               # Extract the unique container images from the rendered chart
               container_images=$(yq '.spec.template.spec.containers[].image' "rendered.yaml" | sort -u)
             fi
-            
-            helm_version=$CHART_VERSION
-            if [ -z "$helm_version" ]; then
-              if [ -f "$CHART_PATH" ] && [[ "$CHART_PATH" == *.tgz ]]; then
-                artifactPath="$CHART_PATH"
-              else
-                chartArtifactDir="/tmp/helm-chart-artifact"
-                if helm package $CHART_PATH --destination "$chartArtifactDir" > /dev/null 2>&1; then
-                  artifactPath=$(ls -Art "$chartArtifactDir"/*.tgz | tail -n 1)
-                fi
-              fi
-              if [ -f "$artifactPath" ]; then
-                helm_version="sha256:$(sha256sum "$artifactPath" | awk '{print $1}')"
-              fi
-            fi
-        
+
             if [ -n "$container_images" ]; then
               echo "Saving artifact information for chart $CHART_LOCATION"
-            fi
-        
-            # Save the artifact information for each chart
-            for info in $container_images; do
-        
-              image_name=$(echo "$info" | sed 's/:.*//')
-              image_version=$(echo "$info" | sed 's/.*://')
-        
-              purl=""
+
+              helm_version=$CHART_VERSION
+              if [ -z "$helm_version" ]; then
+                if [ -f "$CHART_PATH" ] && [[ "$CHART_PATH" == *.tgz ]]; then
+                  artifactPath="$CHART_PATH"
+                else
+                  chartArtifactDir="/tmp/helm-chart-artifact"
+                  if helm package $CHART_PATH --destination "$chartArtifactDir" > /dev/null 2>&1; then
+                    artifactPath=$(ls -Art "$chartArtifactDir"/*.tgz | tail -n 1)
+                  fi
+                fi
+                if [ -f "$artifactPath" ]; then
+                  helm_version="sha256:$(sha256sum "$artifactPath" | awk '{print $1}')"
+                fi
+              fi
+  
               if [[ "$CHART_LOCATION" =~ ^oci:// ]]; then
                 # OCI image format
                 sha256_digest=$(helm pull "$CHART_LOCATION" 2>&1 | grep 'Digest:' | sed 's/Digest: //' || echo "" )
@@ -242,11 +233,19 @@ runs:
                     purl="pkg:$CHART_LOCATION@$sha256_digest"
                 fi
               fi
-        
+
               if [ -z "$purl" ]; then
                 # Handle non-OCI images
                 purl="$CHART_LOCATION@$helm_version"
               fi
+            fi
+
+            # Save the artifact information for each chart
+            for info in $container_images; do
+
+              image_name=$(echo "$info" | sed 's/:.*//')
+              image_version=$(echo "$info" | sed 's/.*://')
+
               response=$(curl -sS -i -X 'POST' "$CLOUDBEES_API_URL/v2/workflows/runs/artifactinfos" \
                 -d "{
                   \"runId\": \"$CLOUDBEES_RUN_ID\",
