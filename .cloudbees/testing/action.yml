@@ -210,7 +210,11 @@ runs:
             fi
             
             helm_version=$CHART_VERSION
-            if [ -z "$helm_version" ] && yq -e '.metadata.labels."helm.sh/chart"' "rendered.yaml" > /dev/null 2>&1; then 
+            if [ -z "$helm_version" ] && yq -e '.metadata.labels."helm.sh/chart"' "rendered.yaml" > /dev/null 2>&1; then
+              echo "TMP:"
+              ls -la /tmp/
+              echo "CHART_LOCATION: $CHART_LOCATION"
+              ls -la $CHART_LOCATION
               chartArtifactDir="/tmp/helm-chart-artifact"
               echo "Packaging chart $CHART_LOCATION"
               if helm package $CHART_LOCATION --destination "$chartArtifactDir"; then
