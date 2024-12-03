@@ -211,7 +211,16 @@ runs:
             
             helm_version=$CHART_VERSION
             if [ -z "$helm_version" ] && yq -e '.metadata.labels."helm.sh/chart"' "rendered.yaml" > /dev/null 2>&1; then 
-              helm_version=$(yq -e '.metadata.labels."helm.sh/chart"' "rendered.yaml" | grep -v '^null$' | grep -v '^$' | grep -v '\-\-\-' | sort -u)
+              chartArtifactDir="/tmp/helm-chart-artifact"
+              echo "Packaging chart $CHART_LOCATION"
+              if helm package $CHART_LOCATION --destination "$chartArtifactDir"; then
+                artifactPath=$(ls -Art "$chartArtifactDir"/*.tgz | tail -n 1)
+                echo "Artifact path: $artifactPath"
+                if [ -f "$artifactPath" ]; then
+                  helm_version=sha256:$(sha256sum "$artifactPath" | awk '{print $1}')
+                  echo "Helm version: $helm_version"
+                fi
+              fi
             fi
         
             if [ -n "$container_images" ]; then
@@ -235,7 +244,7 @@ runs:
         
               if [ -z "$purl" ]; then
                 # Handle non-OCI images
-                purl="$CHART_LOCATION:$helm_version"
+                purl="$CHART_LOCATION@$helm_version"
               fi
               response=$(curl -sS -i -X 'POST' "$CLOUDBEES_API_URL/v2/workflows/runs/artifactinfos" \
                 -d "{
