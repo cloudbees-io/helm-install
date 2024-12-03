@@ -203,11 +203,13 @@ runs:
           if [ $? -eq 0 ]; then
             skaffold render > rendered.yaml
 
+            container_images=""
             if yq -e '.spec.template.spec.containers[]?.image' "rendered.yaml" > /dev/null 2>&1; then
               # Extract the unique container images from the rendered chart
               container_images=$(yq '.spec.template.spec.containers[].image' "rendered.yaml" | sort -u)
             fi
 
+            purl=""
             if [ -n "$container_images" ]; then
               echo "Saving artifact information for chart $CHART_LOCATION"
 
