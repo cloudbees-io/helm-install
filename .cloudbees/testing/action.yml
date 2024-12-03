@@ -211,18 +211,11 @@ runs:
             
             helm_version=$CHART_VERSION
             if [ -z "$helm_version" ] && yq -e '.metadata.labels."helm.sh/chart"' "rendered.yaml" > /dev/null 2>&1; then
-              echo "TMP:"
-              ls -la /tmp/
-              echo "CHART_PATH: $CHART_PATH"
-              ls -la $CHART_PATH
               chartArtifactDir="/tmp/helm-chart-artifact"
-              echo "Packaging chart $CHART_PATH"
-              if helm package $CHART_PATH --destination "$chartArtifactDir"; then
+              if helm package $CHART_PATH --destination "$chartArtifactDir" > /dev/null 2>&1; then
                 artifactPath=$(ls -Art "$chartArtifactDir"/*.tgz | tail -n 1)
-                echo "Artifact path: $artifactPath"
                 if [ -f "$artifactPath" ]; then
                   helm_version=sha256:$(sha256sum "$artifactPath" | awk '{print $1}')
-                  echo "Helm version: $helm_version"
                 fi
               fi
             fi
