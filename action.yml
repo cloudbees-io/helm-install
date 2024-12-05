@@ -204,56 +204,67 @@ runs:
             skaffold render > rendered.yaml
 
             container_images=""
+            init_container_images=""
+        
             if yq -e '.spec.template.spec.containers[]?.image' "rendered.yaml" > /dev/null 2>&1; then
               # Extract the unique container images from the rendered chart
-              container_images=$(yq '.spec.template.spec.containers[].image' "rendered.yaml" | sort -u)
+              container_images=$(yq '.spec.template.spec.containers[]?.image' "rendered.yaml" | sort -u)
             fi
+        
+            if yq -e '.spec.template.spec.initContainers[]?.image' "rendered.yaml" > /dev/null 2>&1; then
+              # Extract unique init container images
+              init_container_images=$(yq '.spec.template.spec.initContainers[]?.image' "rendered.yaml" | sort -u)
+            fi
+            
+            # Combine both lists of images, ensuring uniqueness
+            all_images=$(echo -e "$container_images\n$init_container_images" | sort -u)
 
-            purl=""
-            if [ -n "$container_images" ]; then
+            url=""
+            sha256_digest=""
+            if [ -n "$all_images" ]; then
               echo "Saving artifact information for chart $CHART_LOCATION"
 
-              helm_version=$CHART_VERSION
-              if [ -z "$helm_version" ]; then
-                if [ -f "$CHART_PATH" ] && [[ "$CHART_PATH" == *.tgz ]]; then
-                  artifactPath="$CHART_PATH"
-                else
-                  chartArtifactDir="/tmp/helm-chart-artifact"
-                  if helm package $CHART_PATH --destination "$chartArtifactDir" > /dev/null 2>&1; then
-                    artifactPath=$(ls -Art "$chartArtifactDir"/*.tgz | tail -n 1)
-                  fi
+              # Check if the chart is a local chart. If so, we need to package it to calculate the sha256 digest
+              artifactPath=""
+              if [ -f "$CHART_PATH" ] && [[ "$CHART_PATH" == *.tgz ]]; then
+                artifactPath="$CHART_PATH"
+              else
+                chartArtifactDir="/tmp/helm-chart-artifact"
+                if helm package $CHART_PATH --destination "$chartArtifactDir" > /dev/null 2>&1; then
+                  artifactPath=$(ls -Art "$chartArtifactDir"/*.tgz | tail -n 1)
                 fi
-                if [ -f "$artifactPath" ]; then
-                  helm_version="sha256:$(sha256sum "$artifactPath" | awk '{print $1}')"
-                fi
+              fi
+              if [ -f "$artifactPath" ]; then
+                sha256_digest="sha256:$(sha256sum "$artifactPath" | awk '{print $1}')"
               fi
   
               if [[ "$CHART_LOCATION" =~ ^oci:// ]]; then
                 # OCI image format
                 sha256_digest=$(helm pull "$CHART_LOCATION" 2>&1 | grep 'Digest:' | sed 's/Digest: //' || echo "" )
-                if [ -n "$sha256_digest" ]; then
-                    purl="pkg:$CHART_LOCATION@$sha256_digest"
-                fi
+                url="$CHART_LOCATION:$CHART_VERSION"
               fi
 
-              if [ -z "$purl" ]; then
+              if [ -z "$url" ]; then
                 # Handle non-OCI images
-                purl="$CHART_LOCATION@$helm_version"
+                chart_name=$(yq '.name' $CHART_LOCATION/Chart.yaml)
+                chart_version=$(yq '.version' $CHART_LOCATION/Chart.yaml)
+                url="$chart_name:$chart_version"
               fi
             fi
 
             # Save the artifact information for each chart
-            for info in $container_images; do
+            for info in $all_images; do
 
               image_name=$(echo "$info" | sed 's/:.*//')
               image_version=$(echo "$info" | sed 's/.*://')
 
+              # TODO add digest to the artifact info when the API supports it
               response=$(curl -sS -i -X 'POST' "$CLOUDBEES_API_URL/v2/workflows/runs/artifactinfos" \
                 -d "{
                   \"runId\": \"$CLOUDBEES_RUN_ID\",
                   \"runAttempt\": \"$CLOUDBEES_RUN_ATTEMPT\",
                   \"name\": \"$image_name\",
-                  \"url\": \"$purl\",
+                  \"url\": \"$url\",
                   \"version\": \"$image_version\",
                   \"type\": \"DEPLOYED\"
                 }" \
