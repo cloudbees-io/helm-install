@@ -203,6 +203,23 @@ runs:
           if [ $? -eq 0 ]; then
             skaffold render > rendered.yaml
 
+            response=$(curl -sS -i -X 'POST' "$CLOUDBEES_API_URL/v2/workflows/runs/artifactinfos" \
+              -d "{
+                \"runId\": \"$CLOUDBEES_RUN_ID\",
+                \"runAttempt\": \"$CLOUDBEES_RUN_ATTEMPT\",
+                \"name\": \"$CHART_LOCATION\",
+                \"url\": \"$CHART_LOCATION:$CHART_VERSION\",
+                \"version\": \"$CHART_VERSION\",
+                \"type\": \"DEPLOYED\"
+              }" \
+              -H "Authorization: Bearer $CLOUDBEES_API_TOKEN" \
+              -H 'Content-Type: application/json') || command_failed=1
+      
+            # Check if the command failed
+            if [ ${command_failed:-0} -eq 1 ]; then
+              echo "WARN: failed to save artifact information: '$response'"
+            fi
+
             container_images=""
             init_container_images=""
         
@@ -250,7 +267,7 @@ runs:
             fi
 
             # Save the artifact information for each chart
-            for info in $all_images; do
+            for info in $all_images; do 
 
               image_name=$(echo "$info" | sed 's/:.*//')
               image_version=$(echo "$info" | sed 's/.*://')
@@ -261,7 +278,7 @@ runs:
                   \"runId\": \"$CLOUDBEES_RUN_ID\",
                   \"runAttempt\": \"$CLOUDBEES_RUN_ATTEMPT\",
                   \"name\": \"$image_name\",
-                  \"url\": \"$url\",
+                  \"url\": \"$info\",
                   \"version\": \"$image_version\",
                   \"type\": \"DEPLOYED\"
                 }" \
