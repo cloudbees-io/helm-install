@@ -224,32 +224,29 @@ runs:
             if [ -n "$all_images" ]; then
               echo "Saving artifact information for chart $CHART_LOCATION"
 
-              # Check if the chart is a local chart. If so, we need to package it to calculate the sha256 digest
-              artifactPath=""
-              if [ -f "$CHART_PATH" ] && [[ "$CHART_PATH" == *.tgz ]]; then
-                artifactPath="$CHART_PATH"
-              else
-                chartArtifactDir="/tmp/helm-chart-artifact"
-                if helm package $CHART_PATH --destination "$chartArtifactDir" > /dev/null 2>&1; then
-                  artifactPath=$(ls -Art "$chartArtifactDir"/*.tgz | tail -n 1)
-                fi
-              fi
-              if [ -f "$artifactPath" ]; then
-                sha256_digest="sha256:$(sha256sum "$artifactPath" | awk '{print $1}')"
-              fi
-  
               if [[ "$CHART_LOCATION" =~ ^oci:// ]]; then
                 # OCI image format
                 sha256_digest=$(helm pull "$CHART_LOCATION" 2>&1 | grep 'Digest:' | sed 's/Digest: //' || echo "" )
                 url="$CHART_LOCATION:$CHART_VERSION"
-              fi
-
-              if [ -z "$url" ]; then
+              else
                 # Handle non-OCI images
-                chart_name=$(yq '.name' $CHART_LOCATION/Chart.yaml)
-                chart_version=$(yq '.version' $CHART_LOCATION/Chart.yaml)
+                artifactPath=""
+                if [ -f "$CHART_PATH" ] && [[ "$CHART_PATH" == *.tgz ]]; then
+                  artifactPath="$CHART_PATH"
+                else
+                  chartArtifactDir="/tmp/helm-chart-artifact"
+                  if helm package $CHART_PATH --destination "$chartArtifactDir" > /dev/null 2>&1; then
+                    artifactPath=$(ls -Art "$chartArtifactDir"/*.tgz | tail -n 1)
+                  fi
+                fi
+                if [ -f "$artifactPath" ]; then
+                  sha256_digest="sha256:$(sha256sum "$artifactPath" | awk '{print $1}')"
+                fi
+
+                chart_name=$(yq '.name' $CHART_PATH/Chart.yaml)
+                chart_version=$(yq '.version' $CHART_PATH/Chart.yaml)
                 url="$chart_name:$chart_version"
-              fi
+              fi  
             fi
 
             # Save the artifact information for each chart
