@@ -273,7 +273,7 @@ runs:
                 \"name\": \"$chart_name\",
                 \"url\": \"$url\",
                 \"version\": \"$chart_version\",
-                \"type\": \"DEPLOYED\"
+                \"type\": \"DEPLOY\"
             }"
             
             if [ "$HELM_DEBUG" = "true" ]; then
@@ -302,7 +302,7 @@ runs:
                 \"name\": \"$image_name\",
                 \"url\": \"$info\",
                 \"version\": \"$image_version\",
-                \"type\": \"DEPLOYED\"
+                \"type\": \"DEPLOY\"
               }"
 
               if [ "$HELM_DEBUG" = "true" ]; then
