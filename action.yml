@@ -200,11 +200,11 @@ runs:
           skaffold config set collect-metrics false
           skaffold deploy
           deployment_status=$?
-          if [ ${{ inputs.wait }} = false ]; then
+          if [ ${{ inputs.wait }} = "false" ]; then
             echo "WARN: the 'wait' input parameter is disabled. The action is not waiting for the deployment to complete. Artifact information will not be sent to the CBP Platform as the deployment status cannot be verified."
           fi
         
-          if [ $deployment_status -eq 0 && ${{ inputs.wait }} = true ]; then
+          if [ $deployment_status -eq 0 ] && [ ${{ inputs.wait }} = "true" ]; then
             skaffold render > rendered.yaml
 
             # Check if the command failed
