@@ -241,8 +241,8 @@ runs:
               sha256_digest=$(echo "$helm_pull_output" | grep 'Digest:' | sed 's/Digest: //' || echo "" )
               echo "SHA256 digest: $sha256_digest"
               ls -l "$tmp_dir"
-              #chart_yaml=$(find "$tmp_dir" -name "Chart.yaml" | head -n 1)
-              #echo "Chart yaml: $chart_yaml"
+              chart_yaml=$(find "$tmp_dir" -name "Chart.yaml" | head -n 1)
+              echo "Chart yaml: $chart_yaml"
               #if [ -f "$chart_yaml" ]; then
               #  cat "$chart_yaml"
               #  chart_name=$(yq '.name' "$chart_yaml")
