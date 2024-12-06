@@ -214,41 +214,33 @@ runs:
 
             container_images=""
             init_container_images=""
-        
             if yq -e '.spec.template.spec.containers[]?.image' "rendered.yaml" > /dev/null 2>&1; then
               # Extract the unique container images from the rendered chart
               container_images=$(yq '.spec.template.spec.containers[]?.image' "rendered.yaml" | sort -u)
             fi
-        
             if yq -e '.spec.template.spec.initContainers[]?.image' "rendered.yaml" > /dev/null 2>&1; then
               # Extract unique init container images
               init_container_images=$(yq '.spec.template.spec.initContainers[]?.image' "rendered.yaml" | sort -u)
             fi
-            
             # Combine both lists of images, ensuring uniqueness
             all_images=$(echo -e "$container_images\n$init_container_images" | sort -u)
-            echo "All images: $all_images"
 
             url=""
             sha256_digest=""
             chart_name=""
             chart_version=""
-
             tmp_dir=$(mktemp -d)
             if [[ "$CHART_LOCATION" =~ ^oci:// ]]; then
               # OCI image format
               helm_pull_output=$(helm pull "$CHART_LOCATION" --destination "$tmp_dir" 2>&1)
               sha256_digest=$(echo "$helm_pull_output" | grep 'Digest:' | sed 's/Digest: //' || echo "" )
-              
               helm show chart "$CHART_LOCATION" > "$tmp_dir/Chart.yaml"
               chart_yaml="$tmp_dir/Chart.yaml"
-              echo "Chart yaml: $chart_yaml"
               if [ -f "$chart_yaml" ]; then
                 cat "$chart_yaml"
                 chart_name=$(yq '.name' "$chart_yaml")
                 chart_version=$(yq '.version' "$chart_yaml")
                 url="$CHART_LOCATION:$chart_version"
-                echo "Chart name: $chart_name; Chart version: $chart_version; URL: $url"
               fi
             else
               # Handle non-OCI images
@@ -265,7 +257,6 @@ runs:
               fi
               helm show chart "$CHART_PATH" > "$tmp_dir/Chart.yaml"
               chart_yaml="$tmp_dir/Chart.yaml"
-              echo "Chart yaml: $chart_yaml"
               if [ -f "$chart_yaml" ]; then
                 chart_name=$(yq '.name' $CHART_PATH/Chart.yaml)
                 chart_version=$(yq '.version' $CHART_PATH/Chart.yaml)
