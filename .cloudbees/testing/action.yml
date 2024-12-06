@@ -237,35 +237,34 @@ runs:
             tmp_dir=$(mktemp -d)
             if [[ "$CHART_LOCATION" =~ ^oci:// ]]; then
               # OCI image format
-              helm_pull_output=$(helm pull "$CHART_LOCATION" --destination "$tmp_dir" --untar 2>&1)
+              helm_pull_output=$(helm pull "$CHART_LOCATION" --destination "$tmp_dir" 2>&1)
               sha256_digest=$(echo "$helm_pull_output" | grep 'Digest:' | sed 's/Digest: //' || echo "" )
-              echo "SHA256 digest: $sha256_digest"
-              find --version
-              # chart_yaml=$(find "$tmp_dir" -name "Chart.yaml" | head -n 1)
-              # echo "Chart yaml: $chart_yaml"
-              # if [ -f "$chart_yaml" ]; then
-              #  cat "$chart_yaml"
-              #  chart_name=$(yq '.name' "$chart_yaml")
-              #  chart_version=$(yq '.version' "$chart_yaml")
-              #  url="$CHART_LOCATION:$chart_version"
-              #  echo "Chart name: $chart_name; Chart version: $chart_version; URL: $url"
-              # fi
+              
+              helm show chart "$CHART_LOCATION" > "$tmp_dir/Chart.yaml"
+              chart_yaml="$tmp_dir/Chart.yaml"
+              echo "Chart yaml: $chart_yaml"
+              if [ -f "$chart_yaml" ]; then
+                cat "$chart_yaml"
+                chart_name=$(yq '.name' "$chart_yaml")
+                chart_version=$(yq '.version' "$chart_yaml")
+                url="$CHART_LOCATION:$chart_version"
+                echo "Chart name: $chart_name; Chart version: $chart_version; URL: $url"
+              fi
             else
               # Handle non-OCI images
               artifactPath=""
               if [ -f "$CHART_PATH" ] && [[ "$CHART_PATH" == *.tgz ]]; then
                 artifactPath="$CHART_PATH"
-                helm show chart "$CHART_PATH" > "$tmp_dir/Chart.yaml"
-                chart_yaml="$tmp_dir/Chart.yaml"
               else
                 if helm package $CHART_PATH --destination "$tmp_dir" > /dev/null 2>&1; then
                   artifactPath=$(ls -Art "$tmp_dir"/*.tgz | tail -n 1)
                 fi
-                chart_yaml=$(find "$CHART_PATH" -name "Chart.yaml" | head -n 1)
               fi
               if [ -f "$artifactPath" ]; then
                 sha256_digest="sha256:$(sha256sum "$artifactPath" | awk '{print $1}')"
               fi
+              helm show chart "$CHART_PATH" > "$tmp_dir/Chart.yaml"
+              chart_yaml="$tmp_dir/Chart.yaml"
               echo "Chart yaml: $chart_yaml"
               if [ -f "$chart_yaml" ]; then
                 chart_name=$(yq '.name' $CHART_PATH/Chart.yaml)
