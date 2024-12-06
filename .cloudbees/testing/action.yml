@@ -239,19 +239,14 @@ runs:
               # OCI image format
               helm_pull_output=$(helm pull "$CHART_LOCATION" --destination "$tmp_dir" --untar 2>&1)
               sha256_digest=$(echo "$helm_pull_output" | grep 'Digest:' | sed 's/Digest: //' || echo "" )
-              chart_archive=$(find "$tmp_dir" -name "*.tgz" | head -n 1)
-              echo "Chart archive path: $chart_archive"
-              ls -l "$tmp_dir"
-              if [ -f "$chart_archive" ]; then
-                chart_yaml=$(find "$tmp_dir" -name "Chart.yaml" | head -n 1)
-                echo "Chart yaml: $chart_yaml"
-                if [ -f "$chart_yaml" ]; then
-                  cat "$chart_yaml"
-                  chart_name=$(yq '.name' "$chart_yaml")
-                  chart_version=$(yq '.version' "$chart_yaml")
-                  url="$CHART_LOCATION:$chart_version"
-                  echo "Chart name: $chart_name; Chart version: $chart_version; URL: $url"
-                fi
+              chart_yaml=$(find "$tmp_dir" -name "Chart.yaml" | head -n 1)
+              echo "Chart yaml: $chart_yaml"
+              if [ -f "$chart_yaml" ]; then
+                cat "$chart_yaml"
+                chart_name=$(yq '.name' "$chart_yaml")
+                chart_version=$(yq '.version' "$chart_yaml")
+                url="$CHART_LOCATION:$chart_version"
+                echo "Chart name: $chart_name; Chart version: $chart_version; URL: $url"
               fi
             else
               # Handle non-OCI images
