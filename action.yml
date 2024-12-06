@@ -238,35 +238,57 @@ runs:
 
             url=""
             sha256_digest=""
-            if [ -n "$all_images" ]; then
-              echo "Saving artifact information for chart $CHART_LOCATION"
+            chart_name=""
+            chart_version=""
 
-              if [[ "$CHART_LOCATION" =~ ^oci:// ]]; then
-                # OCI image format
-                sha256_digest=$(helm pull "$CHART_LOCATION" 2>&1 | grep 'Digest:' | sed 's/Digest: //' || echo "" )
-                url="$CHART_LOCATION:$CHART_VERSION"
+            if [[ "$CHART_LOCATION" =~ ^oci:// ]]; then
+              # OCI image format
+              helm_pull_output=$(helm pull "$CHART_LOCATION" 2>&1)
+              sha256_digest=$(echo "$helm_pull_output" | grep 'Digest:' | sed 's/Digest: //' || echo "" )
+              chart_name=$(echo "$helm_pull_output" | grep 'Pulled:' | sed 's/Pulled: //' | sed 's/:.*//' || echo "")
+              chart_version=$(echo "$helm_pull_output" | grep 'Pulled:' | sed 's/Pulled: //' | sed 's/.*://' || echo "")
+              url="$CHART_LOCATION:$chart_version"
+            else
+              # Handle non-OCI images
+              artifactPath=""
+              if [ -f "$CHART_PATH" ] && [[ "$CHART_PATH" == *.tgz ]]; then
+                artifactPath="$CHART_PATH"
               else
-                # Handle non-OCI images
-                artifactPath=""
-                if [ -f "$CHART_PATH" ] && [[ "$CHART_PATH" == *.tgz ]]; then
-                  artifactPath="$CHART_PATH"
-                else
-                  chartArtifactDir="/tmp/helm-chart-artifact"
-                  if helm package $CHART_PATH --destination "$chartArtifactDir" > /dev/null 2>&1; then
-                    artifactPath=$(ls -Art "$chartArtifactDir"/*.tgz | tail -n 1)
-                  fi
+                chartArtifactDir="/tmp/helm-chart-artifact"
+                if helm package $CHART_PATH --destination "$chartArtifactDir" > /dev/null 2>&1; then
+                  artifactPath=$(ls -Art "$chartArtifactDir"/*.tgz | tail -n 1)
                 fi
-                if [ -f "$artifactPath" ]; then
-                  sha256_digest="sha256:$(sha256sum "$artifactPath" | awk '{print $1}')"
-                fi
+              fi
+              if [ -f "$artifactPath" ]; then
+                sha256_digest="sha256:$(sha256sum "$artifactPath" | awk '{print $1}')"
+              fi
 
-                chart_name=$(yq '.name' $CHART_PATH/Chart.yaml)
-                chart_version=$(yq '.version' $CHART_PATH/Chart.yaml)
-                url="$chart_name:$chart_version"
-              fi  
+              chart_name=$(yq '.name' $CHART_PATH/Chart.yaml)
+              chart_version=$(yq '.version' $CHART_PATH/Chart.yaml)
+              url="$chart_name:$chart_version"
+            fi  
+        
+            echo "Saving artifact information for chart $CHART_LOCATION"
+
+            # Save the chart artifact information
+            response=$(curl -sS -i -X 'POST' "$CLOUDBEES_API_URL/v2/workflows/runs/artifactinfos" \
+              -d "{
+                \"runId\": \"$CLOUDBEES_RUN_ID\",
+                \"runAttempt\": \"$CLOUDBEES_RUN_ATTEMPT\",
+                \"name\": \"$chart_name\",
+                \"url\": \"$url\",
+                \"version\": \"$chart_version\",
+                \"type\": \"DEPLOYED\"
+              }" \
+              -H "Authorization: Bearer $CLOUDBEES_API_TOKEN" \
+              -H 'Content-Type: application/json') || command_failed=1
+        
+            # Check if the command failed
+            if [ ${command_failed:-0} -eq 1 ]; then
+              echo "WARN: failed to save artifact information: '$response'"
             fi
 
-            # Save the artifact information for each chart
+            # Save the artifact information for each image
             for info in $all_images; do 
 
               image_name=$(echo "$info" | sed 's/:.*//')
