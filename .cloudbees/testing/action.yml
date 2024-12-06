@@ -276,7 +276,7 @@ runs:
             echo "Saving artifact information for chart $CHART_LOCATION"
 
             # Save the chart artifact information
-            payload= "{
+            payload="{
                 \"runId\": \"$CLOUDBEES_RUN_ID\",
                 \"runAttempt\": \"$CLOUDBEES_RUN_ATTEMPT\",
                 \"name\": \"$chart_name\",
