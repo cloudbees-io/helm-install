@@ -243,15 +243,16 @@ runs:
               echo "Chart archive path: $chart_archive"
               ls -l "$temp_dir"
               if [ -f "$chart_archive" ]; then
-              #  tar -xzf "$chart_archive" -C "$temp_dir"
-              #  chart_yaml=$(find "$temp_dir" -name "Chart.yaml" | head -n 1)
-              #  echo "Chart yaml: $chart_yaml"
-              #  if [ -f "$chart_yaml" ]; then
+                tar -xzf "$chart_archive" -C "$temp_dir"
+                chart_yaml=$(find "$temp_dir" -name "Chart.yaml" | head -n 1)
+                echo "Chart yaml: $chart_yaml"
+                if [ -f "$chart_yaml" ]; then
+                  cat "$chart_yaml"
               #    chart_name=$(yq '.name' "$chart_yaml")
               #    chart_version=$(yq '.version' "$chart_yaml")
               #    url="$CHART_LOCATION:$chart_version"
               #    echo "Chart name: $chart_name; Chart version: $chart_version; URL: $url"
-              #  fi
+                fi
               chart_name="chartNameTest"
               chart_version="chartVersionTest"
               url="chartUrlTest"
