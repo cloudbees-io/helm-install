@@ -227,6 +227,7 @@ runs:
             
             # Combine both lists of images, ensuring uniqueness
             all_images=$(echo -e "$container_images\n$init_container_images" | sort -u)
+            echo "All images: $all_images"
 
             url=""
             sha256_digest=""
@@ -239,13 +240,16 @@ runs:
               helm_pull_output=$(helm pull "$CHART_LOCATION" --destination "$temp_dir"  2>&1)
               sha256_digest=$(echo "$helm_pull_output" | grep 'Digest:' | sed 's/Digest: //' || echo "" )
               chart_archive=$(find "$temp_dir" -name "*.tgz" | head -n 1)
+              echo "Chart archive path: $chart_archive"
               if [ -f "$chart_archive" ]; then
                 tar -xzf "$chart_archive" -C "$temp_dir"
                 chart_yaml=$(find "$temp_dir" -name "Chart.yaml" | head -n 1)
+                echo "Chart yaml: $chart_yaml"
                 if [ -f "$chart_yaml" ]; then
                   chart_name=$(yq '.name' "$chart_yaml")
                   chart_version=$(yq '.version' "$chart_yaml")
                   url="$CHART_LOCATION:$chart_version"
+                  echo "Chart name: $chart_name; Chart version: $chart_version; URL: $url"
                 fi
               fi
             else
@@ -264,13 +268,14 @@ runs:
               if [ -f "$artifactPath" ]; then
                 sha256_digest="sha256:$(sha256sum "$artifactPath" | awk '{print $1}')"
               fi
-        
+              echo "Chart yaml: $chart_yaml"
               if [ -f "$chart_yaml" ]; then
                 chart_name=$(yq '.name' $CHART_PATH/Chart.yaml)
                 chart_version=$(yq '.version' $CHART_PATH/Chart.yaml)
                 url="$chart_name:$chart_version"
               fi
             fi  
+            ls -l "$temp_dir"
             rm -rf "$temp_dir"
         
             echo "Saving artifact information for chart $CHART_LOCATION"
@@ -285,7 +290,7 @@ runs:
                 \"type\": \"DEPLOYED\"
             }"
             
-            if [ "$HELM_DEBUG" = true ]; then
+            if [ "$HELM_DEBUG" = "true" ]; then
               echo "DEBUG: Payload to be sent to artifact info API:"
               echo "$payload"
             fi
@@ -314,7 +319,7 @@ runs:
                 \"type\": \"DEPLOYED\"
               }"
 
-              if [ "$HELM_DEBUG" = true ]; then
+              if [ "$HELM_DEBUG" = "true" ]; then
                 echo "DEBUG: Payload to be sent to artifact info API:"
                 echo "$payload"
               fi
