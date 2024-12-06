@@ -234,40 +234,35 @@ runs:
             chart_name=""
             chart_version=""
 
-            temp_dir=$(mktemp -d)
+            tmp_dir=$(mktemp -d)
             if [[ "$CHART_LOCATION" =~ ^oci:// ]]; then
               # OCI image format
-              helm_pull_output=$(helm pull "$CHART_LOCATION" --destination "$temp_dir"  2>&1)
+              helm_pull_output=$(helm pull "$CHART_LOCATION" --destination "$tmp_dir" --untar 2>&1)
               sha256_digest=$(echo "$helm_pull_output" | grep 'Digest:' | sed 's/Digest: //' || echo "" )
-              chart_archive=$(find "$temp_dir" -name "*.tgz" | head -n 1)
+              chart_archive=$(find "$tmp_dir" -name "*.tgz" | head -n 1)
               echo "Chart archive path: $chart_archive"
-              ls -l "$temp_dir"
-              tar --version
-              # if [ -f "$chart_archive" ]; then
-              #  tar -xzf "$chart_archive" -C "$temp_dir"
-              #  chart_yaml=$(find "$temp_dir" -name "Chart.yaml" | head -n 1)
-              #  echo "Chart yaml: $chart_yaml"
-              #  if [ -f "$chart_yaml" ]; then
-              #    cat "$chart_yaml"
-              #    chart_name=$(yq '.name' "$chart_yaml")
-              #    chart_version=$(yq '.version' "$chart_yaml")
-              #    url="$CHART_LOCATION:$chart_version"
-              #    echo "Chart name: $chart_name; Chart version: $chart_version; URL: $url"
-              #  fi
-              chart_name="chartNameTest"
-              chart_version="chartVersionTest"
-              url="chartUrlTest"
+              ls -l "$tmp_dir"
+              if [ -f "$chart_archive" ]; then
+                chart_yaml=$(find "$tmp_dir" -name "Chart.yaml" | head -n 1)
+                echo "Chart yaml: $chart_yaml"
+                if [ -f "$chart_yaml" ]; then
+                  cat "$chart_yaml"
+                  chart_name=$(yq '.name' "$chart_yaml")
+                  chart_version=$(yq '.version' "$chart_yaml")
+                  url="$CHART_LOCATION:$chart_version"
+                  echo "Chart name: $chart_name; Chart version: $chart_version; URL: $url"
+                fi
               fi
             else
               # Handle non-OCI images
               artifactPath=""
               if [ -f "$CHART_PATH" ] && [[ "$CHART_PATH" == *.tgz ]]; then
                 artifactPath="$CHART_PATH"
-                tar -xzf "$CHART_PATH" -C "$temp_dir"
-                chart_yaml=$(find "$temp_dir" -name "Chart.yaml" | head -n 1)
+                helm show chart "$CHART_PATH" > "$tmp_dir/Chart.yaml"
+                chart_yaml="$tmp_dir/Chart.yaml"
               else
-                if helm package $CHART_PATH --destination "$temp_dir" > /dev/null 2>&1; then
-                  artifactPath=$(ls -Art "$temp_dir"/*.tgz | tail -n 1)
+                if helm package $CHART_PATH --destination "$tmp_dir" > /dev/null 2>&1; then
+                  artifactPath=$(ls -Art "$tmp_dir"/*.tgz | tail -n 1)
                 fi
                 chart_yaml=$(find "$CHART_PATH" -name "Chart.yaml" | head -n 1)
               fi
@@ -281,8 +276,8 @@ runs:
                 url="$chart_name:$chart_version"
               fi
             fi  
-            ls -l "$temp_dir"
-            rm -rf "$temp_dir"
+            ls -l "$tmp_dir"
+            rm -rf "$tmp_dir"
         
             echo "Saving artifact information for chart $CHART_LOCATION"
 
