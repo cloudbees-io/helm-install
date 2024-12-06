@@ -237,7 +237,6 @@ runs:
               helm show chart "$CHART_LOCATION" > "$tmp_dir/Chart.yaml"
               chart_yaml="$tmp_dir/Chart.yaml"
               if [ -f "$chart_yaml" ]; then
-                cat "$chart_yaml"
                 chart_name=$(yq '.name' "$chart_yaml")
                 chart_version=$(yq '.version' "$chart_yaml")
                 url="$CHART_LOCATION:$chart_version"
@@ -263,7 +262,6 @@ runs:
                 url="$chart_name:$chart_version"
               fi
             fi  
-            ls -l "$tmp_dir"
             rm -rf "$tmp_dir"
         
             echo "Saving artifact information for chart $CHART_LOCATION"
