@@ -1,11 +1,11 @@
 name: helm-install-action
 apiVersion: automation.cloudbees.io/v1alpha1
 kind: workflow
+
 on:
   push:
     branches:
-      - "**"
-  workflow_dispatch:
+      - '**'
 jobs:
   build:
     if: cloudbees.api.url == 'https://api.saas-preprod.beescloud.com' || cloudbees.api.url == 'https://api.cloudbees.io'
@@ -13,176 +13,177 @@ jobs:
       scm-token-own: read
       id-token: write
     steps:
-      - name: get source code
-        uses: cloudbees-io/checkout@v1
-      - name: Validate action
-        uses: docker://amazon/aws-cli:2.15.54
-        run: |
-          TESTING_SHA=$(cat .cloudbees/testing/action.yml | sha1sum)
-          ORIGINAL_SHA=$(sed -e 's|docker://public.ecr.aws/l7o7z1g8/actions/|docker://020229604682.dkr.ecr.us-east-1.amazonaws.com/actions/|g' < action.yml | sha1sum)
-          if [ "${TESTING_SHA}" != "${ORIGINAL_SHA}" ]; then
-            echo "Original action different from testing action"
-            exit 1
-          fi
-      - name: Run bats tests
-        uses: docker://bats/bats:v1.10.0
-        with:
-          entrypoint: /opt/bats/bin/bats
-          args: .
-      - name: Login to AWS
-        uses: https://github.com/cloudbees-io/configure-aws-credentials@v1
-        with:
-          aws-region: us-east-1
-          role-to-assume: ${{ vars.oidc_staging_iam_role }}
-          role-duration-seconds: "3600"
-      - id: ecrconfig
-        name: Configure container registry for staging ECR
-        uses: cloudbees-io/configure-ecr-credentials@v1
-      - name: docker build and publish
-        uses: cloudbees-io/kaniko@v1
-        with:
-          destination: 020229604682.dkr.ecr.us-east-1.amazonaws.com/actions/helm-install-action:${{ cloudbees.scm.sha }},020229604682.dkr.ecr.us-east-1.amazonaws.com/actions/helm-install-action:latest
-          context: ${{ cloudbees.workspace }}
-          labels: maintainer=sdp-pod-3,email=engineering@cloudbees.com
-          registry-mirrors: 020229604682.dkr.ecr.us-east-1.amazonaws.com/docker-hub
-      - name: Run TruffleHog Container Action
-        uses: cloudbees-io/trufflehog-secret-scan-container@v1
-        with:
-          image-location: 020229604682.dkr.ecr.us-east-1.amazonaws.com/actions/helm-install-action
-          image-tag: ${{ cloudbees.scm.sha }}
+    - name: get source code
+      uses: cloudbees-io/checkout@v1
+    - name: Validate action
+      uses: docker://amazon/aws-cli:2.15.54
+      run: |
+        TESTING_SHA=$(cat .cloudbees/testing/action.yml | sha1sum)
+        ORIGINAL_SHA=$(sed -e 's|docker://public.ecr.aws/l7o7z1g8/actions/|docker://020229604682.dkr.ecr.us-east-1.amazonaws.com/actions/|g' < action.yml | sha1sum)
+        if [ "${TESTING_SHA}" != "${ORIGINAL_SHA}" ]; then
+          echo "Original action different from testing action"
+          exit 1
+        fi
+    - name: Run bats tests
+      uses: docker://bats/bats:v1.10.0
+      with:
+        entrypoint: /opt/bats/bin/bats
+        args: .
+    - name: Login to AWS
+      uses: https://github.com/cloudbees-io/configure-aws-credentials@v1
+      with:
+        aws-region: us-east-1
+        role-to-assume: ${{ vars.oidc_staging_iam_role }}
+        role-duration-seconds: "3600"
+    - id: ecrconfig
+      name: Configure container registry for staging ECR
+      uses: cloudbees-io/configure-ecr-credentials@v1
+    - name: docker build and publish
+      uses: cloudbees-io/kaniko@v1
+      with:
+        destination: 020229604682.dkr.ecr.us-east-1.amazonaws.com/actions/helm-install-action:${{ cloudbees.scm.sha }},020229604682.dkr.ecr.us-east-1.amazonaws.com/actions/helm-install-action:latest
+        context: ${{ cloudbees.workspace }}
+        labels: maintainer=sdp-pod-3,email=engineering@cloudbees.com
+        registry-mirrors: 020229604682.dkr.ecr.us-east-1.amazonaws.com/docker-hub
+    - name: Run TruffleHog Container Action
+      uses: cloudbees-io/trufflehog-secret-scan-container@v1
+      with:
+        image-location: 020229604682.dkr.ecr.us-east-1.amazonaws.com/actions/helm-install-action
+        image-tag: ${{ cloudbees.scm.sha }}
   install-test:
+    environment: dev-test-environment
     needs: build
     permissions:
       scm-token-own: read
       id-token: write
     steps:
-      - name: Login to AWS
-        uses: https://github.com/cloudbees-io/configure-aws-credentials@v1
-        with:
-          aws-region: us-east-1
-          role-to-assume: ${{ vars.oidc_staging_iam_role }}
-          role-duration-seconds: "3600"
-      - id: ecrconfig
-        name: Configure container registry for staging ECR
-        uses: cloudbees-io/configure-ecr-credentials@v1
-      - uses: cloudbees-io/configure-eks-credentials@v1
-        with:
-          name: ${{ vars.staging_east_cluster_name }}
-      - name: checkout
-        uses: cloudbees-io/checkout@v1
-      - id: createns
-        name: Create Kubernetes Namespace
-        uses: cloudbees-io/create-k8s-namespace@v1
-        with:
-          name: ${{ format('{0}{1}{2}', cloudbees.scm.branch, cloudbees.scm.repository, cloudbees.scm.sha) }}
-          sanitize-name: "true"
-          labels: |
-            cloudbees.io/cleanup: "true"
-      - name: install an OCI helm chart with dry-run enabled
-        uses: ./.cloudbees/testing
-        with:
-          release-name: nginx-dry-run
-          chart-location: oci://registry-1.docker.io/bitnamicharts/nginx
-          version: 15.4.2
-          namespace: ${{ steps.createns.outputs.name }}
-          dry-run: "true"
-      - name: install an remote/OCI helm chart
-        uses: ./.cloudbees/testing
-        with:
-          release-name: nginx-example
-          chart-location: oci://registry-1.docker.io/bitnamicharts/nginx
-          version: 15.4.2
-          namespace: ${{ steps.createns.outputs.name }}
-          timeout: 2m
-          values: |
-            service:
-              type: ClusterIP
-      - name: upgrade an remote/OCI helm chart
-        uses: ./.cloudbees/testing
-        with:
-          release-name: nginx-example
-          chart-location: oci://registry-1.docker.io/bitnamicharts/nginx
-          version: 15.4.2
-          namespace: ${{ steps.createns.outputs.name }}
-          timeout: 2m
-          values: |
-            commonLabels:
-              some-label: some-label-value
-      - name: verify remote/OCI chart release was upgraded
-        uses: docker://alpine/k8s:1.31.2
-        run: |
-          set -ux
-          VAL="$(kubectl get deployment nginx-example -n ${{ steps.createns.outputs.name }} -o jsonpath={.metadata.labels.some-label})"
-          [ "$VAL" = 'some-label-value' ]
-      - name: install a local helm chart with inline values
-        uses: ./.cloudbees/testing
-        with:
-          release-name: example
-          chart-location: charts/example
-          dependency-build: "true"
-          namespace: ${{ steps.createns.outputs.name }}
-          debug: "true"
-          timeout: 1m
-          values: |
-            myobj:
-              myproperty: override value
-              examplejsonstring: '{"auths":{}}'
-      - name: upgrade local chart release with changed values
-        uses: ./.cloudbees/testing
-        with:
-          release-name: example
-          chart-location: charts/example
-          dependency-build: "true"
-          namespace: ${{ steps.createns.outputs.name }}
-          debug: "true"
-          timeout: 1m
-          values: |
-            myobj:
-              myproperty: changed value
-              examplejsonstring: '{"auths":{}}'
-      - name: verify local chart release was upgraded
-        uses: docker://alpine/k8s:1.31.2
-        run: |
-          set -ux
-          VAL="$(kubectl get cm example -n ${{ steps.createns.outputs.name }} -o jsonpath={.data.key})"
-          [ "$VAL" = 'changed value' ]
-      - id: invalid-inline-values
-        name: Try to install a helm chart with malformed inline values
-        continue-on-error: true
-        uses: ./.cloudbees/testing
-        with:
-          release-name: example-invalid-values
-          chart-location: charts/example
-          dependency-build: "true"
-          namespace: ${{ steps.createns.outputs.name }}
-          debug: "true"
-          values: |
-            myobj: malformed
-              asdf:
-      - name: install a local helm chart with dependencies and timeout
-        continue-on-error: true
-        uses: ./.cloudbees/testing
-        with:
-          release-name: example
-          chart-location: charts/example_with_dependency
-          dependency-build: "true"
-          namespace: ${{ steps.createns.outputs.name }}
-          timeout: 5m30s
-      - name: install multiple values files
-        uses: ./.cloudbees/testing
-        with:
-          release-name: example
-          chart-location: charts/example
-          namespace: ${{ steps.createns.outputs.name }}
-          timeout: 2m
-          values-files: |
-            charts/example/values.yaml
-            charts/example/values-test.yaml
-      - name: install a local helm chart with wait set to false
-        uses: ./.cloudbees/testing
-        with:
-          release-name: example-deployment
-          chart-location: charts/example-deployment
-          namespace: ${{ steps.createns.outputs.name }}
-          timeout: 1m
-          wait: "false"
+    - name: Login to AWS
+      uses: https://github.com/cloudbees-io/configure-aws-credentials@v1
+      with:
+        aws-region: us-east-1
+        role-to-assume: ${{ vars.oidc_staging_iam_role }}
+        role-duration-seconds: "3600"
+    - id: ecrconfig
+      name: Configure container registry for staging ECR
+      uses: cloudbees-io/configure-ecr-credentials@v1
+    - uses: cloudbees-io/configure-eks-credentials@v1
+      with:
+        name: ${{ vars.staging_east_cluster_name }}
+    - name: checkout
+      uses: cloudbees-io/checkout@v1
+    - id: createns
+      name: Create Kubernetes Namespace
+      uses: cloudbees-io/create-k8s-namespace@v1
+      with:
+        name: ${{ format('{0}{1}{2}', cloudbees.scm.branch, cloudbees.scm.repository, cloudbees.scm.sha) }}
+        sanitize-name: "true"
+        labels: |
+          cloudbees.io/cleanup: "true"
+    - name: install an OCI helm chart with dry-run enabled
+      uses: ./.cloudbees/testing
+      with:
+        release-name: nginx-dry-run
+        chart-location: oci://registry-1.docker.io/bitnamicharts/nginx
+        version: 15.4.2
+        namespace: ${{ steps.createns.outputs.name }}
+        dry-run: 'true'
+    - name: install an remote/OCI helm chart
+      uses: ./.cloudbees/testing
+      with:
+        release-name: nginx-example
+        chart-location: oci://registry-1.docker.io/bitnamicharts/nginx
+        version: 15.4.2
+        namespace: ${{ steps.createns.outputs.name }}
+        timeout: 2m
+        values: |
+          service:
+            type: ClusterIP
+    - name: upgrade an remote/OCI helm chart
+      uses: ./.cloudbees/testing
+      with:
+        release-name: nginx-example
+        chart-location: oci://registry-1.docker.io/bitnamicharts/nginx
+        version: 15.4.2
+        namespace: ${{ steps.createns.outputs.name }}
+        timeout: 2m
+        values: |
+          commonLabels:
+            some-label: some-label-value
+    - name: verify remote/OCI chart release was upgraded
+      uses: docker://alpine/k8s:1.31.2
+      run: |
+        set -ux
+        VAL="$(kubectl get deployment nginx-example -n ${{ steps.createns.outputs.name }} -o jsonpath={.metadata.labels.some-label})"
+        [ "$VAL" = 'some-label-value' ]
+    - name: install a local helm chart with inline values
+      uses: ./.cloudbees/testing
+      with:
+        release-name: example
+        chart-location: charts/example
+        dependency-build: 'true'
+        namespace: ${{ steps.createns.outputs.name }}
+        debug: 'true'
+        timeout: 1m
+        values: |
+          myobj:
+            myproperty: override value
+            examplejsonstring: '{"auths":{}}'
+    - name: upgrade local chart release with changed values
+      uses: ./.cloudbees/testing
+      with:
+        release-name: example
+        chart-location: charts/example
+        dependency-build: 'true'
+        namespace: ${{ steps.createns.outputs.name }}
+        debug: 'true'
+        timeout: 1m
+        values: |
+          myobj:
+            myproperty: changed value
+            examplejsonstring: '{"auths":{}}'
+    - name: verify local chart release was upgraded
+      uses: docker://alpine/k8s:1.31.2
+      run: |
+        set -ux
+        VAL="$(kubectl get cm example -n ${{ steps.createns.outputs.name }} -o jsonpath={.data.key})"
+        [ "$VAL" = 'changed value' ]
+    - id: invalid-inline-values
+      name: Try to install a helm chart with malformed inline values
+      continue-on-error: true
+      uses: ./.cloudbees/testing
+      with:
+        release-name: example-invalid-values
+        chart-location: charts/example
+        dependency-build: 'true'
+        namespace: ${{ steps.createns.outputs.name }}
+        debug: 'true'
+        values: |
+          myobj: malformed
+            asdf:
+    - name: install a local helm chart with dependencies and timeout
+      continue-on-error: true
+      uses: ./.cloudbees/testing
+      with:
+        release-name: example
+        chart-location: charts/example_with_dependency
+        dependency-build: 'true'
+        namespace: ${{ steps.createns.outputs.name }}
+        timeout: 5m30s
+    - name: install multiple values files
+      uses: ./.cloudbees/testing
+      with:
+        release-name: example
+        chart-location: charts/example
+        namespace: ${{ steps.createns.outputs.name }}
+        timeout: 2m
+        values-files: |
+          charts/example/values.yaml
+          charts/example/values-test.yaml
+    - name: install a local helm chart with wait set to false
+      uses: ./.cloudbees/testing
+      with:
+        release-name: example-deployment
+        chart-location: charts/example-deployment
+        namespace: ${{ steps.createns.outputs.name }}
+        timeout: 1m
+        wait: 'false'
