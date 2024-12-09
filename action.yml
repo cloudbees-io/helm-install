@@ -300,7 +300,7 @@ runs:
 
               digest=$(kubectl get pods "$HELM_NAMESPACE" -o yaml | \
                       yq ".items[].status.containerStatuses[] | select(.image == \"$image_name\") | .imageID" - | \
-                      awk -F'@' '{print $2}' | tr -d '"')
+                      awk -F'@' '{print $2}' | sed 's/"//g')
   
               payload="{
                 \"runId\": \"$CLOUDBEES_RUN_ID\",
