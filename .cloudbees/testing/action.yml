@@ -298,7 +298,7 @@ runs:
               image_name=$(echo "$info" | sed 's/:.*//')
               image_version=$(echo "$info" | sed 's/.*://')
               digest=$(kubectl get pods -n "$HELM_NAMESPACE" -o yaml | \
-                     yq ".items[].status.containerStatuses[] | select(.image == \"$image_name\") | .imageID" - | \
+                     yq ".items[].status.containerStatuses[] | select(.image == \"$info\") | .imageID" - | \
                      awk -F'@' '{print $2}' | sed 's/"//g')
 
               payload="{
