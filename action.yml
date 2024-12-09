@@ -298,11 +298,16 @@ runs:
               image_name=$(echo "$info" | sed 's/:.*//')
               image_version=$(echo "$info" | sed 's/.*://')
 
+              digest=$(kubectl get pods "$HELM_NAMESPACE" -o yaml | \
+                      yq ".items[].status.containerStatuses[] | select(.image == \"$image_name\") | .imageID" - | \
+                      awk -F'@' '{print $2}' | tr -d '"')
+  
               payload="{
                 \"runId\": \"$CLOUDBEES_RUN_ID\",
                 \"runAttempt\": \"$CLOUDBEES_RUN_ATTEMPT\",
                 \"name\": \"$image_name\",
                 \"url\": \"$info\",
+                \"digest\": \"$digest\",
                 \"operation\": \"DEPLOYED\",
                 \"version\": \"$image_version\",
                 \"type\": \"docker\"
