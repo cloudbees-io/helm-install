@@ -270,10 +270,12 @@ runs:
             payload="{
                 \"runId\": \"$CLOUDBEES_RUN_ID\",
                 \"runAttempt\": \"$CLOUDBEES_RUN_ATTEMPT\",
+                \"digest\": \"$sha256_digest\",
                 \"name\": \"$chart_name\",
                 \"url\": \"$url\",
+                \"operation\": \"DEPLOYED\",
                 \"version\": \"$chart_version\",
-                \"type\": \"DEPLOY\"
+                \"type\": \"helm\"
             }"
             
             if [ "$HELM_DEBUG" = "true" ]; then
@@ -301,8 +303,9 @@ runs:
                 \"runAttempt\": \"$CLOUDBEES_RUN_ATTEMPT\",
                 \"name\": \"$image_name\",
                 \"url\": \"$info\",
+                \"operation\": \"DEPLOYED\",
                 \"version\": \"$image_version\",
-                \"type\": \"DEPLOY\"
+                \"type\": \"docker\"
               }"
 
               if [ "$HELM_DEBUG" = "true" ]; then
