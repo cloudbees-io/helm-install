@@ -299,7 +299,7 @@ runs:
               image_version=$(echo "$info" | sed 's/.*://')
               digest=$(kubectl get pods -n "$HELM_NAMESPACE" -o yaml | \
                      yq ".items[].status.containerStatuses[] | select(.image == \"$info\") | .imageID" - | \
-                     awk -F'@' '{print $2}' | sed 's/"//g')
+                     awk -F'@' '{print $2}' | sed 's/"//g' | head -n 1)
 
               payload="{
                 \"runId\": \"$CLOUDBEES_RUN_ID\",
