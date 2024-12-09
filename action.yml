@@ -263,7 +263,7 @@ runs:
               fi
             fi  
             rm -rf "$tmp_dir"
-        
+
             echo "Saving artifact information for chart $CHART_LOCATION"
 
             # Save the chart artifact information
@@ -277,7 +277,7 @@ runs:
                 \"version\": \"$chart_version\",
                 \"type\": \"helm\"
             }"
-            
+
             if [ "$HELM_DEBUG" = "true" ]; then
               echo "DEBUG: Payload to be sent to artifact info API:"
               echo "$payload"
@@ -286,7 +286,7 @@ runs:
               -d "$payload" \
               -H "Authorization: Bearer $CLOUDBEES_API_TOKEN" \
               -H 'Content-Type: application/json') || command_failed=1
-        
+
             # Check if the command failed
             if [ ${command_failed:-0} -eq 1 ]; then
               echo "WARN: failed to save artifact information: '$response'"
