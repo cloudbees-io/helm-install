@@ -278,10 +278,10 @@ runs:
                 \"type\": \"helm\"
             }"
 
-            if [ "$HELM_DEBUG" = "true" ]; then
+            # if [ "$HELM_DEBUG" = "true" ]; then
               echo "DEBUG: Payload to be sent to artifact info API:"
               echo "$payload"
-            fi
+            # fi
             response=$(curl -s -i -X 'POST' "$CLOUDBEES_API_URL/v2/workflows/runs/artifactinfos" \
               -d "$payload" \
               -H "Authorization: Bearer $CLOUDBEES_API_TOKEN" \
@@ -308,10 +308,10 @@ runs:
                 \"type\": \"docker\"
               }"
 
-              if [ "$HELM_DEBUG" = "true" ]; then
+              # if [ "$HELM_DEBUG" = "true" ]; then
                 echo "DEBUG: Payload to be sent to artifact info API:"
                 echo "$payload"
-              fi
+              # fi
 
               # TODO add digest to the artifact info when the API supports it
               response=$(curl -s -i -X 'POST' "$CLOUDBEES_API_URL/v2/workflows/runs/artifactinfos" \
