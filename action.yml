@@ -282,7 +282,7 @@ runs:
               echo "DEBUG: Payload to be sent to artifact info API:"
               echo "$payload"
             # fi
-            response=$(curl -s -i -X 'POST' "$CLOUDBEES_API_URL/v2/workflows/runs/artifactinfos" \
+            response=$(curl --fail-with-body -s -i -X 'POST' "$CLOUDBEES_API_URL/v2/workflows/runs/artifactinfos" \
               -d "$payload" \
               -H "Authorization: Bearer $CLOUDBEES_API_TOKEN" \
               -H 'Content-Type: application/json') || command_failed=1
@@ -314,7 +314,7 @@ runs:
               # fi
 
               # TODO add digest to the artifact info when the API supports it
-              response=$(curl -s -i -X 'POST' "$CLOUDBEES_API_URL/v2/workflows/runs/artifactinfos" \
+              response=$(curl --fail-with-body -s -i -X 'POST' "$CLOUDBEES_API_URL/v2/workflows/runs/artifactinfos" \
                 -d "$payload" \
                 -H "Authorization: Bearer $CLOUDBEES_API_TOKEN" \
                 -H 'Content-Type: application/json') || command_failed=1
