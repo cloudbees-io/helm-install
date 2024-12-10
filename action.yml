@@ -301,11 +301,11 @@ runs:
               
               kubectl get pods -n "$HELM_NAMESPACE" -o yaml
               echo "DEBUG: Extracting image ID for $image"
-              kubectl get pods -n "$HELM_NAMESPACE" -o yaml | yq ".items[]?.status?.containerStatuses[] | select(.image == \"$image\") | .imageID" - 2>/dev/null || echo "" | sort -u
+              kubectl get pods -n "$HELM_NAMESPACE" -o yaml | (yq ".items[]?.status?.containerStatuses[] | select(.image == \"$image\") | .imageID" - 2>/dev/null || echo "") | sort -u
               
               echo "DEBUG: Extracting sha256 digest for $image"
               sha256_digest=$(kubectl get pods -n "$HELM_NAMESPACE" -o yaml | \
-                     yq ".items[]?.status?.containerStatuses[] | select(.image == \"$image\") | .imageID" - 2>/dev/null || echo "" | \
+                     (yq ".items[]?.status?.containerStatuses[] | select(.image == \"$image\") | .imageID" - 2>/dev/null || echo "") | \
                      sort -u | awk -F'@' '{print $2}' | sed 's/"//g' | head -n 1)
               echo "DEBUG: Image $image has digest $sha256_digest"
               payload="{
