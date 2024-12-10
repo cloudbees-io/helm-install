@@ -283,7 +283,7 @@ runs:
               echo "DEBUG: Payload to be sent to artifact info API:"
               echo "$payload"
             # fi
-            response=$(curl --fail-with-body -s -i -X 'POST' "$CLOUDBEES_API_URL/v2/workflows/runs/artifactinfos" \
+            response=$(curl --fail-with-body -s -X 'POST' "$CLOUDBEES_API_URL/v2/workflows/runs/artifactinfos" \
               -d "$payload" \
               -H "Authorization: Bearer $CLOUDBEES_API_TOKEN" \
               -H 'Content-Type: application/json') || command_failed=1
@@ -295,13 +295,13 @@ runs:
 
             # Save the artifact information for each image
             for info in $all_images; do 
-
+              echo "Saving artifact information for image $info"
               image_name=$(echo "$info" | sed 's/:.*//')
               image_version=$(echo "$info" | sed 's/.*://')
               sha256_digest=$(kubectl get pods -n "$HELM_NAMESPACE" -o yaml | \
                      yq ".items[].status.containerStatuses[] | select(.image == \"$info\") | .imageID" - | \
                      awk -F'@' '{print $2}' | sed 's/"//g' | head -n 1)
-
+              echo "DEBUG: Image $info has digest $sha256_digest"
               payload="{
                 \"runId\": \"$CLOUDBEES_RUN_ID\",
                 \"runAttempt\": \"$CLOUDBEES_RUN_ATTEMPT\",
@@ -318,7 +318,7 @@ runs:
                 echo "$payload"
               # fi
 
-              response=$(curl --fail-with-body -s -i -X 'POST' "$CLOUDBEES_API_URL/v2/workflows/runs/artifactinfos" \
+              response=$(curl --fail-with-body -s -X 'POST' "$CLOUDBEES_API_URL/v2/workflows/runs/artifactinfos" \
                 -d "$payload" \
                 -H "Authorization: Bearer $CLOUDBEES_API_TOKEN" \
                 -H 'Content-Type: application/json') || command_failed=1
