@@ -279,10 +279,10 @@ runs:
                 \"type\": \"helm\"
             }"
 
-            # if [ "$HELM_DEBUG" = "true" ]; then
+            if [ "$HELM_DEBUG" = "true" ]; then
               echo "DEBUG: Payload to be sent to artifact info API:"
               echo "$payload"
-            # fi
+            fi
             response=$(curl --fail-with-body -s -X 'POST' "$CLOUDBEES_API_URL/v2/workflows/runs/artifactinfos" \
               -d "$payload" \
               -H "Authorization: Bearer $CLOUDBEES_API_TOKEN" \
@@ -295,20 +295,12 @@ runs:
 
             # Save the artifact information for each image
             for image in $all_images; do 
-              echo "Saving artifact information for image $image"
               image_name=$(echo "$image" | sed 's/:.*//')
               image_version=$(echo "$image" | sed 's/.*://')
-              
-              #echo "DEBUG: Extracting sha256 digest for $image"
-              #image_digests=$(kubectl get pods -n "$HELM_NAMESPACE" -o yaml | \
-              #       yq ".items[]?.status?.containerStatuses[] | select(.image == \"$image\") | .imageID" - 2>/dev/null || echo "")
-              #echo "DEBUG: Image digests: $image_digests"
-              #sha256_digest=$(echo "$image_digests" | sort -u | awk -F'@' '{print $2}' | sed 's/"//g' | head -n 1)
-              
               sha256_digest=$(kubectl get pods -n "$HELM_NAMESPACE" -o yaml | \
                      (yq ".items[]?.status?.containerStatuses[] | select(.image == \"$image\") | .imageID" - 2>/dev/null || echo "") | \
                      sort -u | awk -F'@' '{print $2}' | sed 's/"//g' | head -n 1)
-              echo "DEBUG: Image $image has digest $sha256_digest"
+
               payload="{
                 \"runId\": \"$CLOUDBEES_RUN_ID\",
                 \"runAttempt\": \"$CLOUDBEES_RUN_ATTEMPT\",
@@ -320,10 +312,10 @@ runs:
                 \"type\": \"docker\"
               }"
 
-              # if [ "$HELM_DEBUG" = "true" ]; then
+              if [ "$HELM_DEBUG" = "true" ]; then
                 echo "DEBUG: Payload to be sent to artifact info API:"
                 echo "$payload"
-              # fi
+              fi
 
               response=$(curl --fail-with-body -s -X 'POST' "$CLOUDBEES_API_URL/v2/workflows/runs/artifactinfos" \
                 -d "$payload" \
