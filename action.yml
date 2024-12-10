@@ -207,17 +207,12 @@ runs:
           if [ $deployment_status -eq 0 ] && [ ${{ inputs.wait }} = "true" ]; then
             skaffold render > rendered.yaml
 
-            # Check if the command failed
-            if [ ${command_failed:-0} -eq 1 ]; then
-              echo "WARN: failed to save artifact information: '$response'"
-            fi
-
             container_images=""
-            init_container_images=""
             if yq -e '.spec.template.spec.containers[]?.image' "rendered.yaml" > /dev/null 2>&1; then
               # Extract the unique container images from the rendered chart
               container_images=$(yq '.spec.template.spec.containers[]?.image' "rendered.yaml" | sort -u)
             fi
+            init_container_images=""
             if yq -e '.spec.template.spec.initContainers[]?.image' "rendered.yaml" > /dev/null 2>&1; then
               # Extract unique init container images
               init_container_images=$(yq '.spec.template.spec.initContainers[]?.image' "rendered.yaml" | sort -u)
@@ -234,12 +229,14 @@ runs:
               # OCI image format
               helm_pull_output=$(helm pull "$CHART_LOCATION" --destination "$tmp_dir" 2>&1)
               sha256_digest=$(echo "$helm_pull_output" | grep 'Digest:' | sed 's/Digest: //' || echo "" )
-              helm show chart "$CHART_LOCATION" > "$tmp_dir/Chart.yaml"
               chart_yaml="$tmp_dir/Chart.yaml"
+              helm show chart "$CHART_LOCATION" > "$chart_yaml"
               if [ -f "$chart_yaml" ]; then
                 chart_name=$(yq '.name' "$chart_yaml")
                 chart_version=$(yq '.version' "$chart_yaml")
                 url="$CHART_LOCATION:$chart_version"
+              else 
+                echo "WARN: failed to retrieve chart information from $CHART_LOCATION"
               fi
             else
               # Handle non-OCI images
@@ -254,12 +251,16 @@ runs:
               if [ -f "$artifactPath" ]; then
                 sha256_digest="sha256:$(sha256sum "$artifactPath" | awk '{print $1}')"
               fi
-              helm show chart "$CHART_PATH" > "$tmp_dir/Chart.yaml"
+
+              # Extract chart information from the non-OCI chart (local directory or archive)
               chart_yaml="$tmp_dir/Chart.yaml"
+              helm show chart "$CHART_PATH" > "$chart_yaml"
               if [ -f "$chart_yaml" ]; then
-                chart_name=$(yq '.name' $CHART_PATH/Chart.yaml)
-                chart_version=$(yq '.version' $CHART_PATH/Chart.yaml)
+                chart_name=$(yq '.name' $chart_yaml)
+                chart_version=$(yq '.version' $chart_yaml)
                 url="$chart_name:$chart_version"
+              else
+                echo "WARN: failed to retrieve chart information from $CHART_LOCATION"
               fi
             fi  
             rm -rf "$tmp_dir"
@@ -297,7 +298,7 @@ runs:
 
               image_name=$(echo "$info" | sed 's/:.*//')
               image_version=$(echo "$info" | sed 's/.*://')
-              digest=$(kubectl get pods -n "$HELM_NAMESPACE" -o yaml | \
+              sha256_digest=$(kubectl get pods -n "$HELM_NAMESPACE" -o yaml | \
                      yq ".items[].status.containerStatuses[] | select(.image == \"$info\") | .imageID" - | \
                      awk -F'@' '{print $2}' | sed 's/"//g' | head -n 1)
 
@@ -306,7 +307,7 @@ runs:
                 \"runAttempt\": \"$CLOUDBEES_RUN_ATTEMPT\",
                 \"name\": \"$image_name\",
                 \"url\": \"$info\",
-                \"digest\": \"$digest\",
+                \"digest\": \"$sha256_digest\",
                 \"operation\": \"DEPLOYED\",
                 \"version\": \"$image_version\",
                 \"type\": \"docker\"
@@ -317,7 +318,6 @@ runs:
                 echo "$payload"
               # fi
 
-              # TODO add digest to the artifact info when the API supports it
               response=$(curl --fail-with-body -s -i -X 'POST' "$CLOUDBEES_API_URL/v2/workflows/runs/artifactinfos" \
                 -d "$payload" \
                 -H "Authorization: Bearer $CLOUDBEES_API_TOKEN" \
