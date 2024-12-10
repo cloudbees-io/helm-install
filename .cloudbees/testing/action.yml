@@ -294,7 +294,7 @@ runs:
             fi
 
             # Save the artifact information for each image
-            for image in $all_images; do 
+            for image in $all_images; do
               image_name=$(echo "$image" | sed 's/:.*//')
               image_version=$(echo "$image" | sed 's/.*://')
               sha256_digest=$(kubectl get pods -n "$HELM_NAMESPACE" -o yaml | \
@@ -317,6 +317,7 @@ runs:
                 echo "$payload"
               fi
 
+              command_failed=0
               response=$(curl --fail-with-body -s -X 'POST' "$CLOUDBEES_API_URL/v2/workflows/runs/artifactinfos" \
                 -d "$payload" \
                 -H "Authorization: Bearer $CLOUDBEES_API_TOKEN" \
