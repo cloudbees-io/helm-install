@@ -51,6 +51,7 @@ jobs:
         image-location: 020229604682.dkr.ecr.us-east-1.amazonaws.com/actions/helm-install-action
         image-tag: ${{ cloudbees.scm.sha }}
   install-test:
+    environment: dev-test-environment
     needs: build
     permissions:
       scm-token-own: read
