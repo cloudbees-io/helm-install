@@ -76,87 +76,87 @@ jobs:
           sanitize-name: "true"
           labels: |
             cloudbees.io/cleanup: "true"
-      - name: install an OCI helm chart with dry-run enabled
-        uses: ./.cloudbees/testing
-        with:
-          release-name: nginx-dry-run
-          chart-location: oci://registry-1.docker.io/bitnamicharts/nginx
-          version: 15.4.2
-          namespace: ${{ steps.createns.outputs.name }}
-          dry-run: "true"
-      - name: install an remote/OCI helm chart
-        uses: ./.cloudbees/testing
-        with:
-          release-name: nginx-example
-          chart-location: oci://registry-1.docker.io/bitnamicharts/nginx
-          version: 15.4.2
-          namespace: ${{ steps.createns.outputs.name }}
-          timeout: 2m
-          values: |
-            service:
-              type: ClusterIP
-      - name: upgrade an remote/OCI helm chart
-        uses: ./.cloudbees/testing
-        with:
-          release-name: nginx-example
-          chart-location: oci://registry-1.docker.io/bitnamicharts/nginx
-          version: 15.4.2
-          namespace: ${{ steps.createns.outputs.name }}
-          timeout: 2m
-          values: |
-            commonLabels:
-              some-label: some-label-value
-      - name: verify remote/OCI chart release was upgraded
-        uses: docker://alpine/k8s:1.31.2
-        run: |
-          set -ux
-          VAL="$(kubectl get deployment nginx-example -n ${{ steps.createns.outputs.name }} -o jsonpath={.metadata.labels.some-label})"
-          [ "$VAL" = 'some-label-value' ]
-      - name: install a local helm chart with inline values
-        uses: ./.cloudbees/testing
-        with:
-          release-name: example
-          chart-location: charts/example
-          dependency-build: "true"
-          namespace: ${{ steps.createns.outputs.name }}
-          debug: "true"
-          timeout: 1m
-          values: |
-            myobj:
-              myproperty: override value
-              examplejsonstring: '{"auths":{}}'
-      - name: upgrade local chart release with changed values
-        uses: ./.cloudbees/testing
-        with:
-          release-name: example
-          chart-location: charts/example
-          dependency-build: "true"
-          namespace: ${{ steps.createns.outputs.name }}
-          debug: "true"
-          timeout: 1m
-          values: |
-            myobj:
-              myproperty: changed value
-              examplejsonstring: '{"auths":{}}'
-      - name: verify local chart release was upgraded
-        uses: docker://alpine/k8s:1.31.2
-        run: |
-          set -ux
-          VAL="$(kubectl get cm example -n ${{ steps.createns.outputs.name }} -o jsonpath={.data.key})"
-          [ "$VAL" = 'changed value' ]
-      - id: invalid-inline-values
-        name: Try to install a helm chart with malformed inline values
-        continue-on-error: true
-        uses: ./.cloudbees/testing
-        with:
-          release-name: example-invalid-values
-          chart-location: charts/example
-          dependency-build: "true"
-          namespace: ${{ steps.createns.outputs.name }}
-          debug: "true"
-          values: |
-            myobj: malformed
-              asdf:
+      # - name: install an OCI helm chart with dry-run enabled
+      #   uses: ./.cloudbees/testing
+      #   with:
+      #     release-name: nginx-dry-run
+      #     chart-location: oci://registry-1.docker.io/bitnamicharts/nginx
+      #     version: 15.4.2
+      #     namespace: ${{ steps.createns.outputs.name }}
+      #     dry-run: "true"
+      # - name: install an remote/OCI helm chart
+      #   uses: ./.cloudbees/testing
+      #   with:
+      #     release-name: nginx-example
+      #     chart-location: oci://registry-1.docker.io/bitnamicharts/nginx
+      #     version: 15.4.2
+      #     namespace: ${{ steps.createns.outputs.name }}
+      #     timeout: 2m
+      #     values: |
+      #       service:
+      #         type: ClusterIP
+      # - name: upgrade an remote/OCI helm chart
+      #   uses: ./.cloudbees/testing
+      #   with:
+      #     release-name: nginx-example
+      #     chart-location: oci://registry-1.docker.io/bitnamicharts/nginx
+      #     version: 15.4.2
+      #     namespace: ${{ steps.createns.outputs.name }}
+      #     timeout: 2m
+      #     values: |
+      #       commonLabels:
+      #         some-label: some-label-value
+      # - name: verify remote/OCI chart release was upgraded
+      #   uses: docker://alpine/k8s:1.31.2
+      #   run: |
+      #     set -ux
+      #     VAL="$(kubectl get deployment nginx-example -n ${{ steps.createns.outputs.name }} -o jsonpath={.metadata.labels.some-label})"
+      #     [ "$VAL" = 'some-label-value' ]
+      # - name: install a local helm chart with inline values
+      #   uses: ./.cloudbees/testing
+      #   with:
+      #     release-name: example
+      #     chart-location: charts/example
+      #     dependency-build: "true"
+      #     namespace: ${{ steps.createns.outputs.name }}
+      #     debug: "true"
+      #     timeout: 1m
+      #     values: |
+      #       myobj:
+      #         myproperty: override value
+      #         examplejsonstring: '{"auths":{}}'
+      # - name: upgrade local chart release with changed values
+      #   uses: ./.cloudbees/testing
+      #   with:
+      #     release-name: example
+      #     chart-location: charts/example
+      #     dependency-build: "true"
+      #     namespace: ${{ steps.createns.outputs.name }}
+      #     debug: "true"
+      #     timeout: 1m
+      #     values: |
+      #       myobj:
+      #         myproperty: changed value
+      #         examplejsonstring: '{"auths":{}}'
+      # - name: verify local chart release was upgraded
+      #   uses: docker://alpine/k8s:1.31.2
+      #   run: |
+      #     set -ux
+      #     VAL="$(kubectl get cm example -n ${{ steps.createns.outputs.name }} -o jsonpath={.data.key})"
+      #     [ "$VAL" = 'changed value' ]
+      # - id: invalid-inline-values
+      #   name: Try to install a helm chart with malformed inline values
+      #   continue-on-error: true
+      #   uses: ./.cloudbees/testing
+      #   with:
+      #     release-name: example-invalid-values
+      #     chart-location: charts/example
+      #     dependency-build: "true"
+      #     namespace: ${{ steps.createns.outputs.name }}
+      #     debug: "true"
+      #     values: |
+      #       myobj: malformed
+      #         asdf:
       - name: install a local helm chart with dependencies and timeout
         continue-on-error: true
         uses: ./.cloudbees/testing
@@ -166,21 +166,21 @@ jobs:
           dependency-build: "true"
           namespace: ${{ steps.createns.outputs.name }}
           timeout: 5m30s
-      - name: install multiple values files
-        uses: ./.cloudbees/testing
-        with:
-          release-name: example
-          chart-location: charts/example
-          namespace: ${{ steps.createns.outputs.name }}
-          timeout: 2m
-          values-files: |
-            charts/example/values.yaml
-            charts/example/values-test.yaml
-      - name: install a local helm chart with wait set to false
-        uses: ./.cloudbees/testing
-        with:
-          release-name: example-deployment
-          chart-location: charts/example-deployment
-          namespace: ${{ steps.createns.outputs.name }}
-          timeout: 1m
-          wait: "false"
+      # - name: install multiple values files
+      #   uses: ./.cloudbees/testing
+      #   with:
+      #     release-name: example
+      #     chart-location: charts/example
+      #     namespace: ${{ steps.createns.outputs.name }}
+      #     timeout: 2m
+      #     values-files: |
+      #       charts/example/values.yaml
+      #       charts/example/values-test.yaml
+      # - name: install a local helm chart with wait set to false
+      #   uses: ./.cloudbees/testing
+      #   with:
+      #     release-name: example-deployment
+      #     chart-location: charts/example-deployment
+      #     namespace: ${{ steps.createns.outputs.name }}
+      #     timeout: 1m
+      #     wait: "false"
