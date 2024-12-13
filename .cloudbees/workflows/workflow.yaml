@@ -76,14 +76,14 @@ jobs:
           sanitize-name: "true"
           labels: |
             cloudbees.io/cleanup: "true"
-      # - name: install an OCI helm chart with dry-run enabled
-      #   uses: ./.cloudbees/testing
-      #   with:
-      #     release-name: nginx-dry-run
-      #     chart-location: oci://registry-1.docker.io/bitnamicharts/nginx
-      #     version: 15.4.2
-      #     namespace: ${{ steps.createns.outputs.name }}
-      #     dry-run: "true"
+      - name: install an OCI helm chart with dry-run enabled
+        uses: ./.cloudbees/testing
+        with:
+          release-name: nginx-dry-run
+          chart-location: oci://registry-1.docker.io/bitnamicharts/nginx
+          version: 15.4.2
+          namespace: ${{ steps.createns.outputs.name }}
+          dry-run: "true"
       # - name: install an remote/OCI helm chart
       #   uses: ./.cloudbees/testing
       #   with:
@@ -157,15 +157,21 @@ jobs:
       #     values: |
       #       myobj: malformed
       #         asdf:
-      - name: install a local helm chart with dependencies and timeout
-        continue-on-error: true
-        uses: ./.cloudbees/testing
-        with:
-          release-name: example
-          chart-location: charts/example_with_dependency
-          dependency-build: "true"
-          namespace: ${{ steps.createns.outputs.name }}
-          timeout: 5m30s
+
+
+
+      # - name: install a local helm chart with dependencies and timeout
+      #   continue-on-error: true
+      #   uses: ./.cloudbees/testing
+      #   with:
+      #     release-name: example
+      #     chart-location: charts/example_with_dependency
+      #     dependency-build: "true"
+      #     namespace: ${{ steps.createns.outputs.name }}
+      #     timeout: 5m30s
+
+
+
       # - name: install multiple values files
       #   uses: ./.cloudbees/testing
       #   with:
