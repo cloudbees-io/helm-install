@@ -256,7 +256,10 @@ runs:
               echo "sha256_digest is $sha256_digest"
               echo "artifactPath is $artifactPath"
               ls -lat "$artifactPath"
-              tar -ztvf "$artifactPath"
+              # tar tzvf "$artifactPath"
+              la -la /bin
+              la -la /usr/bin
+              la -la /usr/local/bin
               echo ""
               
               # Extract chart information from the non-OCI chart (local directory or archive)
