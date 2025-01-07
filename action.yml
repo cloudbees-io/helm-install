@@ -261,6 +261,10 @@ runs:
               # ls -la /bin
               # ls -la /usr/bin
               # ls -la /usr/local/bin
+              echo "Chart.yaml: "
+              cat "$CHART_PATH"/Chart.yaml
+              echo "values.yaml: "
+              cat "$CHART_PATH"/values.yaml
               echo ""
               
               # Extract chart information from the non-OCI chart (local directory or archive)
