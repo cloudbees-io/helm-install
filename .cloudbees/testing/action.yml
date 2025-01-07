@@ -266,7 +266,10 @@ runs:
             rm -rf "$tmp_dir"
 
             echo "Saving artifact information for chart $CHART_LOCATION"
-            echo "test"
+            echo ""
+            echo "sha256_digest is $sha256_digest"
+            echo "artifactPath is $artifactPath"
+            echo ""
 
             # Save the chart artifact information
             payload="{
