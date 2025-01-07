@@ -251,6 +251,7 @@ runs:
               if [ -f "$artifactPath" ]; then
                 sha256_digest="sha256:$(sha256sum "$artifactPath" | awk '{print $1}')"
               fi
+              echo "test"
 
               # Extract chart information from the non-OCI chart (local directory or archive)
               chart_yaml="$tmp_dir/Chart.yaml"
