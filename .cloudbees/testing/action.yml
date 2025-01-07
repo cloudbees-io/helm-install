@@ -251,7 +251,7 @@ runs:
               if [ -f "$artifactPath" ]; then
                 sha256_digest="sha256:$(sha256sum "$artifactPath" | awk '{print $1}')"
               fi
-        
+              
               echo ""
               echo "sha256_digest is $sha256_digest"
               echo "artifactPath is $artifactPath"
