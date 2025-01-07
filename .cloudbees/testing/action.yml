@@ -266,6 +266,7 @@ runs:
             rm -rf "$tmp_dir"
 
             echo "Saving artifact information for chart $CHART_LOCATION"
+            echo "test"
 
             # Save the chart artifact information
             payload="{
