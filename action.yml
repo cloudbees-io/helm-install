@@ -269,6 +269,7 @@ runs:
             echo ""
             echo "sha256_digest is $sha256_digest"
             echo "artifactPath is $artifactPath"
+            ls -lat "$artifactPath"
             echo ""
 
             # Save the chart artifact information
