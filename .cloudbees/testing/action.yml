@@ -240,32 +240,20 @@ runs:
               fi
             else
               # Handle non-OCI images
-              artifactPath=""
               if [ -f "$CHART_PATH" ] && [[ "$CHART_PATH" == *.tgz ]]; then
-                artifactPath="$CHART_PATH"
+                sha256_digest="sha256:$(sha256sum "$CHART_PATH" | awk '{print $1}')"
+                echo "sha256_digest is sha256_digest"
               else
-                if helm package $CHART_PATH --destination "$tmp_dir" > /dev/null 2>&1; then
-                  artifactPath=$(ls -Art "$tmp_dir"/*.tgz | tail -n 1)
-                fi
+                # Calculate the sha256 digest of the chart sorted files content
+                sha256_content=$(find "$CHART_PATH" -type f -print0 | sort -z | xargs -0 sha256sum)
+                echo "sha256_content is $sha256_content"
+                # Calculate the sha256 digest of the chart sorted files and directories names
+                sha256_names=$(find "$CHART_PATH" \( -type f -o -type d \) -print0 | sort -z | xargs -0 | sha256sum)
+                echo "sha256_names is sha256_names"
+                # Calculate the sha256 digest of the two previous digests with prefix "sha256:"
+                sha256_digest="sha256:$(cat $sha256_content,$sha256_names | sha256sum | awk '{print $1}')"
+                echo "sha256_digest is sha256_digest"
               fi
-              if [ -f "$artifactPath" ]; then
-                sha256_digest="sha256:$(sha256sum "$artifactPath" | awk '{print $1}')"
-              fi
-              
-              echo ""
-              echo "sha256_digest is $sha256_digest"
-              echo "artifactPath is $artifactPath"
-              ls -lat "$artifactPath"
-              ls -lat "$CHART_PATH"
-              # tar tzvf "$artifactPath"
-              # ls -la /bin
-              # ls -la /usr/bin
-              # ls -la /usr/local/bin
-              echo "Chart.yaml: "
-              cat "$CHART_PATH"/Chart.yaml
-              echo "values.yaml: "
-              cat "$CHART_PATH"/values.yaml
-              echo ""
               
               # Extract chart information from the non-OCI chart (local directory or archive)
               chart_yaml="$tmp_dir/Chart.yaml"
