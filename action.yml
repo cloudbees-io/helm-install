@@ -242,17 +242,13 @@ runs:
               # Handle non-OCI images
               if [ -f "$CHART_PATH" ] && [[ "$CHART_PATH" == *.tgz ]]; then
                 sha256_digest="sha256:$(sha256sum "$CHART_PATH" | awk '{print $1}')"
-                echo "sha256_digest is sha256_digest"
               else
-                # Calculate the sha256 digest of the chart sorted files content
-                sha256_content=$(find "$CHART_PATH" -type f -print0 | sort -z | xargs -0 sha256sum)
-                echo "sha256_content is $sha256_content"
-                # Calculate the sha256 digest of the chart sorted files and directories names
-                sha256_names=$(find "$CHART_PATH" \( -type f -o -type d \) -print0 | sort -z | xargs -0 | sha256sum)
-                echo "sha256_names is sha256_names"
-                # Calculate the sha256 digest of the two previous digests with prefix "sha256:"
-                sha256_digest="sha256:$(cat $sha256_content,$sha256_names | sha256sum | awk '{print $1}')"
-                echo "sha256_digest is sha256_digest"
+                # Calculate the sha256 digests of the chart sorted files content
+                sha256_content=$(find "$CHART_PATH" -type f -print0 | sort -z | xargs -0 sha256sum | awk '{print $1}')
+                # Calculate the sha256 digests of the chart sorted files and directories names
+                sha256_names=$(find "$CHART_PATH" \( -type f -o -type d \) -print0 | sort -z | xargs -0 | sha256sum | awk '{print $1}')
+                # Calculate the final sha256 digest of the two previous digests with prefix "sha256:"
+                sha256_digest="sha256:$(echo "$sha256_content $sha256_names" | sha256sum | awk '{print $1}')"
               fi
               
               # Extract chart information from the non-OCI chart (local directory or archive)
