@@ -55,7 +55,7 @@ runs:
   steps:
     - id: helm-install
       kind: deploy
-      name: Install a Helm chart
+      name: Install a Helm chart CBP-8549
       uses: docker://public.ecr.aws/l7o7z1g8/actions/helm-install-action:${{ action.scm.sha }}
       run: |
         set -uo pipefail
