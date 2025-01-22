@@ -54,6 +54,7 @@ runs:
   using: composite
   steps:
     - id: helm-install
+      kind: deploy
       name: Install a Helm chart
       uses: docker://020229604682.dkr.ecr.us-east-1.amazonaws.com/actions/helm-install-action:${{ action.scm.sha }}
       run: |
