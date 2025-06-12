@@ -1,6 +1,6 @@
 FROM public.ecr.aws/l7o7z1g8/services/registry-config:0.0.32 as registry-config
 
-FROM alpine/helm:3.17.2
+FROM alpine/helm:3.18.0
 
 RUN set -eux; \
     apk add --no-cache yq; \
