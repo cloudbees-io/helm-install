@@ -4,4 +4,5 @@ metadata:
   name: {{ .Release.Name }}
   namespace: {{ .Release.Namespace }}
 data:
-  key: {{ .Values.myobj.myproperty | quote }}
+  key1: {{ .Values.myobj.myproperty1 | quote }}
+  key2: {{ .Values.myobj.myproperty2 | quote }}
