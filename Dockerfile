@@ -1,12 +1,12 @@
 FROM public.ecr.aws/l7o7z1g8/services/registry-config:0.0.32 as registry-config
 
-FROM alpine/helm:3.18.2
+FROM alpine/helm:3.18.3
 
 RUN set -eux; \
     apk add --no-cache yq; \
     apk upgrade --no-cache
 
-ARG SKAFFOLD_VERSION=v2.14.2 
+ARG SKAFFOLD_VERSION=v2.16.1
 
 RUN set -eux; \
 	ARCH="`uname -m | sed 's!x86_64!amd64!; s!aarch64!arm64!'`"; \
@@ -14,7 +14,7 @@ RUN set -eux; \
 	chmod +x /usr/local/bin/skaffold; \
 	skaffold version
 
-ARG K8S_VERSION=v1.32.3
+ARG K8S_VERSION=v1.33.2
 RUN set -eux; \
 	ARCH="`uname -m | sed 's!x86_64!amd64!; s!aarch64!arm64!'`"; \
 	wget -qO /usr/local/bin/kubectl https://dl.k8s.io/release/$K8S_VERSION/bin/linux/$ARCH/kubectl; \
