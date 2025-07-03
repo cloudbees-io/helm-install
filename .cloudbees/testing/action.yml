@@ -19,7 +19,9 @@ inputs:
   values:
     description: 'An inline YAML representation of a values file passed to the Helm command'
   timeout:
-    description: 'Helm chart installation timeout'
+    description: |
+      Helm chart installation timeout.
+      However, `Deployment.spec.progressDeadlineSeconds` takes precedence if it is defined with a lower value within the chart's manifests.
     default: 5m
   chart-location:
     description: >
