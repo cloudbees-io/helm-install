@@ -1,0 +1,5 @@
+apiVersion: v2
+name: failing-probe-chart
+description: A chart that demonstrates startup/readiness probe failures
+version: 0.1.0
+appVersion: "1.0.0"
