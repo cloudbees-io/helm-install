@@ -200,7 +200,7 @@ runs:
           # Let skaffold deploy the chart to log details on failure
           cd /tmp/skaffold
           skaffold config set collect-metrics false
-          skaffold deploy --status-check=false
+          skaffold deploy
         fi
       env:
         CHART_LOCATION: ${{ inputs.chart-location }}
