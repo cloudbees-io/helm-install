@@ -195,7 +195,7 @@ jobs:
         namespace: ${{ steps.createns.outputs.name }}
         timeout: 1m
         wait: 'false'
-    - name: test error reporting with failing probes
+    - name: test the error reporting with failing probes
       continue-on-error: true
       uses: ./.cloudbees/testing
       with:
