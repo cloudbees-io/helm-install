@@ -207,7 +207,8 @@ runs:
           # Let skaffold deploy the chart to log details on failure
           cd /tmp/skaffold
           skaffold config set collect-metrics false
-          skaffold deploy
+          # Use verbose logging and iterative status checks for consistent detailed output
+          skaffold deploy --verbosity=debug --iterative-status-check=true
         fi
       env:
         CHART_LOCATION: ${{ inputs.chart-location }}
