@@ -101,8 +101,8 @@ runs:
         # Skaffold is used as helm wrapper here to log more detailed information in case of a rollout failure.
         # See https://skaffold.dev/docs/status-check/
         export TIMEOUT_SECONDS="$(duration2seconds "$TIMEOUT")"
-        # Ensure minimum timeout for detailed logging (at least 2 minutes)
-        export MIN_STATUS_TIMEOUT=120
+        # Ensure minimum timeout for detailed logging (at least 5 minutes)
+        export MIN_STATUS_TIMEOUT=300
         if [ "$TIMEOUT_SECONDS" -lt "$MIN_STATUS_TIMEOUT" ]; then
           export EFFECTIVE_STATUS_TIMEOUT="$MIN_STATUS_TIMEOUT"
         else
@@ -207,8 +207,7 @@ runs:
           # Let skaffold deploy the chart to log details on failure
           cd /tmp/skaffold
           skaffold config set collect-metrics false
-          # Use verbose logging and iterative status checks for consistent detailed output
-          skaffold deploy --verbosity=debug --iterative-status-check=true
+          skaffold deploy
         fi
       env:
         CHART_LOCATION: ${{ inputs.chart-location }}
