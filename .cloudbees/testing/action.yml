@@ -101,6 +101,13 @@ runs:
         # Skaffold is used as helm wrapper here to log more detailed information in case of a rollout failure.
         # See https://skaffold.dev/docs/status-check/
         export TIMEOUT_SECONDS="$(duration2seconds "$TIMEOUT")"
+        # Ensure minimum timeout for detailed logging (at least 2 minutes)
+        export MIN_STATUS_TIMEOUT=120
+        if [ "$TIMEOUT_SECONDS" -lt "$MIN_STATUS_TIMEOUT" ]; then
+          export EFFECTIVE_STATUS_TIMEOUT="$MIN_STATUS_TIMEOUT"
+        else
+          export EFFECTIVE_STATUS_TIMEOUT="$TIMEOUT_SECONDS"
+        fi
         mkdir /tmp/skaffold
         cat - >/tmp/skaffold/skaffold.yaml <<-EOF
           apiVersion: skaffold/v4beta10
@@ -109,7 +116,7 @@ runs:
             name: data
           deploy:
             statusCheck: ${{ inputs.wait }}
-            statusCheckDeadlineSeconds: 90
+            statusCheckDeadlineSeconds: 300
             tolerateFailuresUntilDeadline: true
             helm:
               releases:
@@ -131,7 +138,7 @@ runs:
           | .deploy.helm.flags.install[1] = env(TIMEOUT)
           | .deploy.helm.flags.upgrade[1] = env(TIMEOUT)
           | .deploy.helm.releases[0].skipBuildDependencies = env(BUILD_DEPENDENCIES) != "true"
-          | .deploy.statusCheckDeadlineSeconds = env(TIMEOUT_SECONDS)
+          | .deploy.statusCheckDeadlineSeconds = env(EFFECTIVE_STATUS_TIMEOUT)
           ' /tmp/skaffold/skaffold.yaml
 
         if [ -s "${resolved_registries}" ]; then
