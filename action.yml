@@ -103,8 +103,8 @@ runs:
         export TIMEOUT_SECONDS="$(duration2seconds "$TIMEOUT")"
         # Calculate minimum timeout based on startup probe configuration:
         # - initialDelaySeconds: 10s + (failureThreshold: 3 × (periodSeconds: 10s + timeoutSeconds: 5s)) = 55s per restart
-        # - Allow for 2-3 restart cycles with backoff + detailed logging overhead = 300s minimum
-        export MIN_STATUS_TIMEOUT=300
+        # - Allow for 2-3 restart cycles with backoff + detailed logging overhead = 600s minimum
+        export MIN_STATUS_TIMEOUT=600
         if [ "$TIMEOUT_SECONDS" -lt "$MIN_STATUS_TIMEOUT" ]; then
           export EFFECTIVE_STATUS_TIMEOUT="$MIN_STATUS_TIMEOUT"
         else
@@ -118,7 +118,7 @@ runs:
             name: data
           deploy:
             statusCheck: ${{ inputs.wait }}
-            statusCheckDeadlineSeconds: 300
+            statusCheckDeadlineSeconds: 600
             tolerateFailuresUntilDeadline: true
             helm:
               releases:
