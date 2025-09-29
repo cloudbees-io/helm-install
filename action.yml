@@ -102,7 +102,7 @@ runs:
         # See https://skaffold.dev/docs/status-check/
         export TIMEOUT_SECONDS="$(duration2seconds "$TIMEOUT")"
         # Ensure minimum timeout for detailed logging (at least 5 minutes)
-        export MIN_STATUS_TIMEOUT=300
+        export MIN_STATUS_TIMEOUT=180
         if [ "$TIMEOUT_SECONDS" -lt "$MIN_STATUS_TIMEOUT" ]; then
           export EFFECTIVE_STATUS_TIMEOUT="$MIN_STATUS_TIMEOUT"
         else
@@ -116,7 +116,7 @@ runs:
             name: data
           deploy:
             statusCheck: ${{ inputs.wait }}
-            statusCheckDeadlineSeconds: 300
+            statusCheckDeadlineSeconds: 180
             tolerateFailuresUntilDeadline: true
             helm:
               releases:
