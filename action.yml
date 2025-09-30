@@ -22,7 +22,7 @@ inputs:
     description: |
       Helm chart installation timeout.
       However, `Deployment.spec.progressDeadlineSeconds` takes precedence if it is defined with a lower value within the chart's manifests.
-    default: 5m
+    default: 10m
   chart-location:
     description: >
       Helm chart location, can be a URL, a local chart archive,
@@ -130,10 +130,10 @@ runs:
               flags:
                 install:
                 - "--timeout"
-                - "5m"
+                - "10m"
                 upgrade:
                 - "--timeout"
-                - "5m"
+                - "10m"
         EOF
         yq -i '.
           | .deploy.helm.releases[0].name = env(RELEASE_NAME)
