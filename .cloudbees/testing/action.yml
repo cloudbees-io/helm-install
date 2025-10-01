@@ -101,15 +101,17 @@ runs:
         # Skaffold is used as helm wrapper here to log more detailed information in case of a rollout failure.
         # See https://skaffold.dev/docs/status-check/
         export TIMEOUT_SECONDS="$(duration2seconds "$TIMEOUT")"
-        # Calculate minimum timeout based on startup probe configuration:
-        # - initialDelaySeconds: 10s + (failureThreshold: 3 × (periodSeconds: 10s + timeoutSeconds: 5s)) = 55s per restart
-        # - Allow for 2-3 restart cycles with backoff + detailed logging overhead = 600s minimum
-        export MIN_STATUS_TIMEOUT=600
-        if [ "$TIMEOUT_SECONDS" -lt "$MIN_STATUS_TIMEOUT" ]; then
-          export EFFECTIVE_STATUS_TIMEOUT="$MIN_STATUS_TIMEOUT"
-        else
-          export EFFECTIVE_STATUS_TIMEOUT="$TIMEOUT_SECONDS"
+        # Warn if timeout is less than recommended 10 minutes
+        export RECOMMENDED_MIN_TIMEOUT=600
+        if [ "$TIMEOUT_SECONDS" -lt "$RECOMMENDED_MIN_TIMEOUT" ]; then
+          echo "⚠️  WARNING: Timeout set to ${TIMEOUT_SECONDS}s ($(($TIMEOUT_SECONDS / 60))m) which is less than recommended 10 minutes."
+          echo "⚠️  WARNING: This may cause deployment failures due to:"
+          echo "⚠️  WARNING: - Startup probe delays (up to 55s per restart cycle)"
+          echo "⚠️  WARNING: - Pod restart backoff and detailed logging overhead"
+          echo "⚠️  WARNING: - progressDeadlineSeconds in deployment specs (600s)"
+          echo "⚠️  WARNING: Consider increasing timeout to 10m or higher for reliable deployments."
         fi
+        export EFFECTIVE_STATUS_TIMEOUT="$TIMEOUT_SECONDS"
         mkdir /tmp/skaffold
         cat - >/tmp/skaffold/skaffold.yaml <<-EOF
           apiVersion: skaffold/v4beta10
