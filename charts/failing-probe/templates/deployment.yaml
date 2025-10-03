@@ -25,7 +25,6 @@ spec:
             httpGet:
               path: /nonexistent-health-endpoint
               port: 8100
-              scheme: HTTPS
             initialDelaySeconds: 10
             periodSeconds: 10
             timeoutSeconds: 5
