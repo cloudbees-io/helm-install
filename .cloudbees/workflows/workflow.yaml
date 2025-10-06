@@ -82,16 +82,16 @@ jobs:
       uses: ./.cloudbees/testing
       with:
         release-name: nginx-dry-run
-        chart-location: https://github.com/kubernetes/ingress-nginx/releases/download/helm-chart-4.13.3/ingress-nginx-4.13.3.tgz
-        version: 4.13.3
+        chart-location: oci://registry-1.docker.io/cloudpirates/nginx
+        version: 0.1.11
         namespace: ${{ steps.createns.outputs.name }}
         dry-run: 'true'
     - name: install a remote/OCI helm chart
       uses: ./.cloudbees/testing
       with:
         release-name: nginx-example
-        chart-location: https://github.com/kubernetes/ingress-nginx/releases/download/helm-chart-4.13.3/ingress-nginx-4.13.3.tgz
-        version: 4.13.3
+        chart-location: oci://registry-1.docker.io/cloudpirates/nginx
+        version: 0.1.11
         namespace: ${{ steps.createns.outputs.name }}
         timeout: 2m
         values: |
@@ -101,8 +101,8 @@ jobs:
       uses: ./.cloudbees/testing
       with:
         release-name: nginx-example
-        chart-location: https://github.com/kubernetes/ingress-nginx/releases/download/helm-chart-4.13.3/ingress-nginx-4.13.3.tgz
-        version: 4.13.3
+        chart-location: oci://registry-1.docker.io/cloudpirates/nginx
+        version: 0.1.11
         namespace: ${{ steps.createns.outputs.name }}
         timeout: 2m
         values: |
