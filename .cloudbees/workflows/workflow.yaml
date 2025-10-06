@@ -82,7 +82,7 @@ jobs:
       uses: ./.cloudbees/testing
       with:
         release-name: nginx-dry-run
-        chart-location: oci://ghcr.io/kubernetes/ingress-nginx/chart/ingress-nginx
+        chart-location: https://github.com/kubernetes/ingress-nginx/releases/download/helm-chart-4.13.3/ingress-nginx-4.13.3.tgz
         version: 4.13.3
         namespace: ${{ steps.createns.outputs.name }}
         dry-run: 'true'
@@ -90,7 +90,7 @@ jobs:
       uses: ./.cloudbees/testing
       with:
         release-name: nginx-example
-        chart-location: oci://ghcr.io/kubernetes/ingress-nginx/chart/ingress-nginx
+        chart-location: https://github.com/kubernetes/ingress-nginx/releases/download/helm-chart-4.13.3/ingress-nginx-4.13.3.tgz
         version: 4.13.3
         namespace: ${{ steps.createns.outputs.name }}
         timeout: 2m
@@ -101,7 +101,7 @@ jobs:
       uses: ./.cloudbees/testing
       with:
         release-name: nginx-example
-        chart-location: oci://ghcr.io/kubernetes/ingress-nginx/chart/ingress-nginx
+        chart-location: https://github.com/kubernetes/ingress-nginx/releases/download/helm-chart-4.13.3/ingress-nginx-4.13.3.tgz
         version: 4.13.3
         namespace: ${{ steps.createns.outputs.name }}
         timeout: 2m
