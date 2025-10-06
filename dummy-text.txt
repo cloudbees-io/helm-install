@@ -1,0 +1,1 @@
+To see if build passes and bitnami image pull happening or not
