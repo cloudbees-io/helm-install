@@ -1,6 +1,6 @@
 dependencies:
-- name: nginx
-  repository: oci://registry-1.docker.io/bitnamicharts
-  version: 15.4.2
-digest: sha256:9305d044c1ff6da7e3a27544005c1b65d0a182c60beb8625026fb1fb43d9ac8e
-generated: "2023-11-17T23:59:33.134025466+01:00"
+- name: ingress-nginx
+  repository: oci://ghcr.io/kubernetes/ingress-nginx/chart
+  version: 4.13.3
+  digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+  generated: "2025-10-06T00:00:00.000000000+00:00"

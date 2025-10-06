@@ -5,6 +5,6 @@ type: application
 version: 0.0.0
 appVersion: "0.0.0"
 dependencies:
-- name: nginx
-  version: "15.4.2"
-  repository: "oci://registry-1.docker.io/bitnamicharts"
+- name: ingress-nginx
+  version: "4.13.3"
+  repository: "oci://ghcr.io/kubernetes/ingress-nginx/chart"
