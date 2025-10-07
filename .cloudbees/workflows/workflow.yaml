@@ -209,9 +209,8 @@ jobs:
         namespace: ${{ steps.createns.outputs.name }}
         debug: 'true'
         values: |
-          myobj:
-            myproperty: "valid yaml but invalid chart values"
-            nonexistent_field: "this should cause validation error"
+          myobj: malformed
+            asdf:
     - name: install a local helm chart with dependencies and timeout
       uses: ./.cloudbees/testing
       with:
