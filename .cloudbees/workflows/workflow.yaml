@@ -95,13 +95,12 @@ jobs:
         namespace: ${{ steps.createns.outputs.name }}
         timeout: 2m
         values: |
+          image:
+            registry: 020229604682.dkr.ecr.us-east-1.amazonaws.com/docker-hub
+            repository: nginxinc/nginx-unprivileged
+            tag: 1.29-alpine3.22
           service:
             type: ClusterIP
-          containerPort: 8080
-          securityContext:
-            runAsNonRoot: true
-            runAsUser: 101
-            allowPrivilegeEscalation: false
     - name: upgrade an remote/OCI helm chart
       uses: ./.cloudbees/testing
       with:
