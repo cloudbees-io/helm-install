@@ -4,3 +4,27 @@ myobj:
 nginx:
   image:
     registry: 020229604682.dkr.ecr.us-east-1.amazonaws.com/docker-hub
+    repository: nginxinc/nginx-unprivileged
+    tag: 1.29-alpine3.22
+  serverConfig: |
+    server {
+      listen 0.0.0.0:8080;
+      root /usr/share/nginx/html;
+      index index.html index.htm;
+      
+      location / {
+        try_files $uri $uri/ /index.html;
+      }
+    }
+  containerPorts:
+    - name: http
+      containerPort: 8080
+      protocol: TCP
+  service:
+    type: ClusterIP
+  livenessProbe:
+    type: httpGet
+    path: /
+  readinessProbe:
+    type: httpGet
+    path: /
