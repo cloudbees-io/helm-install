@@ -82,30 +82,80 @@ jobs:
       uses: ./.cloudbees/testing
       with:
         release-name: nginx-dry-run
-        chart-location: oci://registry-1.docker.io/bitnamicharts/nginx
-        version: 15.4.2
+        chart-location: oci://registry-1.docker.io/cloudpirates/nginx
+        version: 0.1.11
         namespace: ${{ steps.createns.outputs.name }}
         dry-run: 'true'
     - name: install a remote/OCI helm chart
       uses: ./.cloudbees/testing
       with:
         release-name: nginx-example
-        chart-location: oci://registry-1.docker.io/bitnamicharts/nginx
-        version: 15.4.2
+        chart-location: oci://registry-1.docker.io/cloudpirates/nginx
+        version: 0.1.11
         namespace: ${{ steps.createns.outputs.name }}
         timeout: 2m
         values: |
           service:
-            type: ClusterIP
+            type: ClusterIP        
+          image:
+            registry: 020229604682.dkr.ecr.us-east-1.amazonaws.com/docker-hub
+            repository: nginxinc/nginx-unprivileged
+            tag: 1.29-alpine3.22
+          serverConfig: |
+            server {
+              listen 0.0.0.0:8080;
+              root /usr/share/nginx/html;
+              index index.html index.htm;
+              
+              location / {
+                try_files $uri $uri/ /index.html;
+              }
+            }
+          containerPorts:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          livenessProbe:
+            type: httpGet
+            path: /
+          readinessProbe:
+            type: httpGet
+            path: /
     - name: upgrade an remote/OCI helm chart
       uses: ./.cloudbees/testing
       with:
         release-name: nginx-example
-        chart-location: oci://registry-1.docker.io/bitnamicharts/nginx
-        version: 15.4.2
+        chart-location: oci://registry-1.docker.io/cloudpirates/nginx
+        version: 0.1.11
         namespace: ${{ steps.createns.outputs.name }}
         timeout: 2m
         values: |
+          image:
+            registry: 020229604682.dkr.ecr.us-east-1.amazonaws.com/docker-hub
+            repository: nginxinc/nginx-unprivileged
+            tag: 1.29-alpine3.22
+          serverConfig: |
+            server {
+              listen 0.0.0.0:8080;
+              root /usr/share/nginx/html;
+              index index.html index.htm;
+              
+              location / {
+                try_files $uri $uri/ /index.html;
+              }
+            }
+          containerPorts:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          service:
+            type: ClusterIP
+          livenessProbe:
+            type: httpGet
+            path: /
+          readinessProbe:
+            type: httpGet
+            path: /
           commonLabels:
             some-label: some-label-value
     - name: verify remote/OCI chart release was upgraded

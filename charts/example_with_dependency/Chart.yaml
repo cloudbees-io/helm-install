@@ -6,5 +6,5 @@ version: 0.0.0
 appVersion: "0.0.0"
 dependencies:
 - name: nginx
-  version: "15.4.2"
-  repository: "oci://registry-1.docker.io/bitnamicharts"
+  version: "0.1.11"
+  repository: "oci://registry-1.docker.io/cloudpirates"
