@@ -1,2 +1,6 @@
 myobj:
   myproperty: my value
+
+nginx:
+  image:
+    registry: 020229604682.dkr.ecr.us-east-1.amazonaws.com/docker-hub
