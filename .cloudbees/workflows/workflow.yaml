@@ -114,9 +114,11 @@ jobs:
           livenessProbe:
             type: httpGet
             path: /
+            port: 8080
           readinessProbe:
             type: httpGet
             path: /
+            port: 8080
     - name: upgrade an remote/OCI helm chart
       uses: ./.cloudbees/testing
       with:
