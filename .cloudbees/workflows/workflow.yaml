@@ -101,6 +101,12 @@ jobs:
             tag: 1.29-alpine3.22
           service:
             type: ClusterIP
+            port: 8080
+          containerPort: 8080
+          readinessProbe:
+            httpGet:
+              port: 8080
+              path: /
     - name: upgrade an remote/OCI helm chart
       uses: ./.cloudbees/testing
       with:
