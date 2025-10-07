@@ -95,6 +95,8 @@ jobs:
         namespace: ${{ steps.createns.outputs.name }}
         timeout: 2m
         values: |
+          service:
+            type: ClusterIP        
           image:
             registry: 020229604682.dkr.ecr.us-east-1.amazonaws.com/docker-hub
             repository: nginxinc/nginx-unprivileged
@@ -113,8 +115,6 @@ jobs:
             - name: http
               containerPort: 8080
               protocol: TCP
-          service:
-            type: ClusterIP
           livenessProbe:
             type: httpGet
             path: /
