@@ -6,6 +6,7 @@ metadata:
     {{- include "example-deployment.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
+  progressDeadlineSeconds: 600
   selector:
     matchLabels:
       {{- include "example-deployment.selectorLabels" . | nindent 6 }}
