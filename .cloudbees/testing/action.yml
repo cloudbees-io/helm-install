@@ -104,7 +104,7 @@ runs:
         # Warn if timeout is less than recommended 10 minutes
         export RECOMMENDED_MIN_TIMEOUT=600
         if [ "$TIMEOUT_SECONDS" -lt "$RECOMMENDED_MIN_TIMEOUT" ]; then
-          echo "⚠️  WARNING: Timeout set to ${TIMEOUT_SECONDS}s ($(($TIMEOUT_SECONDS / 60))m) which is less than recommended ${RECOMMENDED_MIN_TIMEOUT} minutes."
+          echo "⚠️  WARNING: Timeout set to ${TIMEOUT_SECONDS}s ($(($TIMEOUT_SECONDS / 60))m) which is less than recommended 10 minutes."
           echo "⚠️  WARNING: This may cause deployment failures due to:"
           echo "⚠️  WARNING: - Startup probe delays (up to 55s per restart cycle)"
           echo "⚠️  WARNING: - Pod restart backoff and detailed logging overhead"
