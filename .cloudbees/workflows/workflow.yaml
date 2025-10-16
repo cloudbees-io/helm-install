@@ -254,3 +254,4 @@ jobs:
         namespace: ${{ steps.createns.outputs.name }}
         timeout: 2m
         wait: 'true'
+
