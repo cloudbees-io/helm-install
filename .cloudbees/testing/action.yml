@@ -108,7 +108,7 @@ runs:
           echo "⚠️  WARNING: This may cause deployment failures due to:"
           echo "⚠️  WARNING: - Startup probe delays (up to 55s per restart cycle)"
           echo "⚠️  WARNING: - Pod restart backoff and detailed logging overhead"
-          echo "⚠️  WARNING: - Higher value for progressDeadlineSeconds in deployment specs is recommended"
+          echo "⚠️  WARNING: - Lower value for progressDeadlineSeconds in deployment specs"
           echo "⚠️  WARNING: Consider increasing timeout to 10m or higher for reliable deployments."
         fi
         export EFFECTIVE_STATUS_TIMEOUT="$TIMEOUT_SECONDS"
