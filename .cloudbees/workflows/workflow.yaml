@@ -252,5 +252,5 @@ jobs:
         release-name: failing-probe-test
         chart-location: charts/failing-probe
         namespace: ${{ steps.createns.outputs.name }}
-        timeout: 2m
+        timeout: 10m
         wait: 'true'
