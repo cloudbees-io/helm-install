@@ -22,7 +22,7 @@ inputs:
     description: |
       Helm chart installation timeout.
       However, `Deployment.spec.progressDeadlineSeconds` takes precedence if it is defined with a lower value within the chart's manifests.
-    default: 5m
+    default: 10m
   chart-location:
     description: >
       Helm chart location, can be a URL, a local chart archive,
@@ -101,6 +101,17 @@ runs:
         # Skaffold is used as helm wrapper here to log more detailed information in case of a rollout failure.
         # See https://skaffold.dev/docs/status-check/
         export TIMEOUT_SECONDS="$(duration2seconds "$TIMEOUT")"
+        # Warn if timeout is less than recommended 10 minutes
+        export RECOMMENDED_MIN_TIMEOUT=600
+        if [ "$TIMEOUT_SECONDS" -lt "$RECOMMENDED_MIN_TIMEOUT" ]; then
+          echo "⚠️  WARNING: Timeout set to ${TIMEOUT_SECONDS}s ($(($TIMEOUT_SECONDS / 60))m) which is less than recommended 10 minutes."
+          echo "⚠️  WARNING: This may cause deployment failures due to:"
+          echo "⚠️  WARNING: - Startup probe delays (up to 55s per restart cycle)"
+          echo "⚠️  WARNING: - Pod restart backoff and detailed logging overhead"
+          echo "⚠️  WARNING: - Lower value for progressDeadlineSeconds in deployment specs"
+          echo "⚠️  WARNING: Consider increasing timeout to 10m or higher for reliable deployments."
+        fi
+        export EFFECTIVE_STATUS_TIMEOUT="$TIMEOUT_SECONDS"
         mkdir /tmp/skaffold
         cat - >/tmp/skaffold/skaffold.yaml <<-EOF
           apiVersion: skaffold/v4beta10
@@ -109,7 +120,7 @@ runs:
             name: data
           deploy:
             statusCheck: ${{ inputs.wait }}
-            statusCheckDeadlineSeconds: 90
+            statusCheckDeadlineSeconds: 600
             tolerateFailuresUntilDeadline: true
             helm:
               releases:
@@ -121,17 +132,17 @@ runs:
               flags:
                 install:
                 - "--timeout"
-                - "5m"
+                - "10m"
                 upgrade:
                 - "--timeout"
-                - "5m"
+                - "10m"
         EOF
         yq -i '.
           | .deploy.helm.releases[0].name = env(RELEASE_NAME)
           | .deploy.helm.flags.install[1] = env(TIMEOUT)
           | .deploy.helm.flags.upgrade[1] = env(TIMEOUT)
           | .deploy.helm.releases[0].skipBuildDependencies = env(BUILD_DEPENDENCIES) != "true"
-          | .deploy.statusCheckDeadlineSeconds = env(TIMEOUT_SECONDS)
+          | .deploy.statusCheckDeadlineSeconds = env(EFFECTIVE_STATUS_TIMEOUT)
           ' /tmp/skaffold/skaffold.yaml
 
         if [ -s "${resolved_registries}" ]; then

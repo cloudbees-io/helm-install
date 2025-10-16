@@ -245,3 +245,12 @@ jobs:
         namespace: ${{ steps.createns.outputs.name }}
         timeout: 1m
         wait: 'false'
+    - name: test startup probe failure scenario 
+      continue-on-error: true
+      uses: ./.cloudbees/testing
+      with:
+        release-name: failing-probe-test
+        chart-location: charts/failing-probe
+        namespace: ${{ steps.createns.outputs.name }}
+        timeout: 10m
+        wait: 'true'
