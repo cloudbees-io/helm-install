@@ -4,7 +4,8 @@ FROM alpine/helm:3.18.6
 
 RUN set -eux; \
     apk add --no-cache yq; \
-    apk upgrade --no-cache
+    apk upgrade --no-cache; \
+    apk upgrade --no-cache pcre2
 
 ARG SKAFFOLD_VERSION=v2.16.1
 
