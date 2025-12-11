@@ -41,5 +41,3 @@ jobs:
       run: |
         set -ux
         kubectl delete ns ${{ inputs.namespace }}
-        kubectl delete ns bus-ns-te-0749662
-        kubectl delete ns bus-test--b03bae6    
