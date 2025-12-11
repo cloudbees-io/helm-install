@@ -28,7 +28,6 @@ jobs:
       uses: cloudbees-io/create-k8s-namespace@v1
       with:
         name: ${{ inputs.namespace }}
-        sanitize-name: "true"
         labels: |
           cloudbees.io/cleanup: "true"
     - name: List namespaces
