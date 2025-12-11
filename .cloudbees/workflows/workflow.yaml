@@ -37,7 +37,7 @@ jobs:
         set -ux
         kubectl get ns
     - name: Delete namespaces
-      uses: s
+      uses: docker://alpine/k8s:1.31.2
       run: |
         set -ux
         kubectl delete ns ${{ inputs.namespace }}
