@@ -133,13 +133,14 @@ runs:
                 install:
                 - "--timeout"
                 - "10m"
-                - "--post-renderer"
-                - "/tmp/helm-post-renderer.sh"
+                # TODO: temporarily disabled postrender  
+                #- "--post-renderer"
+                #- "/tmp/helm-post-renderer.sh"
                 upgrade:
                 - "--timeout"
                 - "10m"
-                - "--post-renderer"
-                - "/tmp/helm-post-renderer.sh"
+                #- "--post-renderer"
+                #- "/tmp/helm-post-renderer.sh"
         EOF
         
         cat - >/tmp/helm-post-renderer.sh <<-EOF
@@ -216,6 +217,11 @@ runs:
             ' /tmp/skaffold/skaffold.yaml
         else # local chart
           echo "Resolving local chart path: $CHART_LOCATION"
+          # get dir listing for testing
+          ls ./
+          ls ./deployment-strategies
+          ls ./deployment-strategies/examples
+          ls ./deployment-strategies/examples/helm-canary
           export CHART_PATH="$(realpath "$CHART_LOCATION")"
           yq -i '.deploy.helm.releases[0].chartPath = env(CHART_PATH)' /tmp/skaffold/skaffold.yaml
         fi
@@ -250,7 +256,8 @@ runs:
             --values /tmp/inline-values.yaml \
             --create-namespace \
             --timeout "$TIMEOUT" \
-            --post-renderer /tmp/helm-post-renderer.sh \
+            # TODO: temporarily disabled postrender 
+            #--post-renderer /tmp/helm-post-renderer.sh \
             --dry-run
         else
           # Let skaffold deploy the chart to log details on failure
