@@ -143,24 +143,26 @@ runs:
         EOF
         
         cat - >/tmp/helm-post-renderer.sh <<-EOF
-          cat - | yq eval-all '
-          . as $doc
-          | if $doc.kind == "Deployment" then
-          $doc,
+          #!/bin/sh
+          yq '
+          # 1. Emit all original documents
+          .,
+          ( select(.kind == "Deployment") |
+        # 2. Emit a Rollout for every Deployment
           {
             "apiVersion": "argoproj.io/v1alpha1",
             "kind": "Rollout",
             "metadata": {
-              "name": $doc.metadata.name,
-              "namespace": $doc.metadata.namespace
+              "name": .metadata.name,
+              "namespace": .metadata.namespace
             },
             "spec": {
-              "replicas": $doc.spec.replicas,
-               "selector": $doc.spec.selector,
+              "replicas": (.spec.replicas // 1),
+              "selector": .spec.selector,
               "workloadRef": {
                 "apiVersion": "apps/v1",
                 "kind": "Deployment",
-                "name": $doc.metadata.name
+                "name": .metadata.name
               },
               "strategy": {
                 "canary": {
@@ -174,11 +176,7 @@ runs:
                 }
               }
             }
-          }
-          else
-          $doc
-          end
-          ' -
+          })'
         EOF
         
         chmod +x /tmp/helm-post-renderer.sh
