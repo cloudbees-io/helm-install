@@ -217,11 +217,6 @@ runs:
             ' /tmp/skaffold/skaffold.yaml
         else # local chart
           echo "Resolving local chart path: $CHART_LOCATION"
-          # get dir listing for testing
-          ls ./
-          ls ./deployment-strategies
-          ls ./deployment-strategies/examples
-          ls ./deployment-strategies/examples/helm-canary
           export CHART_PATH="$(realpath "$CHART_LOCATION")"
           yq -i '.deploy.helm.releases[0].chartPath = env(CHART_PATH)' /tmp/skaffold/skaffold.yaml
         fi
