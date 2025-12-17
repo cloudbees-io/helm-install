@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - '**'
+  workflow_dispatch: {}    
 jobs:
   build:
     if: cloudbees.api.url == 'https://api.saas-preprod.beescloud.com' || cloudbees.api.url == 'https://api.cloudbees.io'
