@@ -22,6 +22,13 @@ RUN set -eux; \
 	chmod +x /usr/local/bin/kubectl; \
 	kubectl version --client
 
+ARG ARGO_ROLLOUT_PLUGIN_VERSION=v1.8.3
+RUN set -eux; \
+	ARCH="`uname -m | sed 's!x86_64!amd64!; s!aarch64!arm64!'`"; \
+	wget -qO /usr/local/bin/kubectl-argo-rollouts https://github.com/argoproj/argo-rollouts/releases/download/$ARGO_ROLLOUT_PLUGIN_VERSION/kubectl-argo-rollouts-linux-$ARCH; \
+	chmod +x /usr/local/bin/kubectl-argo-rollouts; \
+	kubectl-argo-rollouts version \
+
 ## # Remove wget - CVE-2024-38428 
 RUN apk del wget
 
