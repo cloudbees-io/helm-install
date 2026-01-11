@@ -144,7 +144,7 @@ runs:
         
         cat - >/tmp/helm-post-renderer.sh <<-EOF
           #!/bin/sh
-          yq '
+          cat <&0 | yq '
           # 1. Emit all original documents
           .,
           ( select(.kind == "Deployment") |
