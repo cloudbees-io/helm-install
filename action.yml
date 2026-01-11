@@ -143,39 +143,39 @@ runs:
         EOF
         
         cat - >/tmp/helm-post-renderer.sh <<-EOF
-          #!/bin/sh
-          cat <&0 | yq '
-          # 1. Emit all original documents
-          .,
-          ( select(.kind == "Deployment") |
-              # 2. Emit a Rollout for every Deployment
-                {
-                  "apiVersion": "argoproj.io/v1alpha1",
-                  "kind": "Rollout",
-                  "metadata": {
-                    "name": .metadata.name
-                  },
-                  "spec": {
-                    "replicas": (.spec.replicas // 1),
-                    "selector": .spec.selector,
-                    "strategy": {
-                      "canary": {
-                        "steps": [
-                          { "setWeight": 20 },
-                          { "pause": {} },
-                          { "setWeight": 50 },
-                          { "pause": {"duration": "30s"} },
-                          { "setWeight": 100 }
-                        ]
-                      }
-                    },
-                    "workloadRef": {
-                      "apiVersion": "apps/v1",
-                      "kind": "Deployment",
-                      "name": .metadata.name
+        #!/bin/sh
+        cat <&0 | yq '
+        # 1. Emit all original documents
+        .,
+        ( select(.kind == "Deployment") |
+            # 2. Emit a Rollout for every Deployment
+              {
+                "apiVersion": "argoproj.io/v1alpha1",
+                "kind": "Rollout",
+                "metadata": {
+                  "name": .metadata.name
+                },
+                "spec": {
+                  "replicas": (.spec.replicas // 1),
+                  "selector": .spec.selector,
+                  "strategy": {
+                    "canary": {
+                      "steps": [
+                        { "setWeight": 20 },
+                        { "pause": {} },
+                        { "setWeight": 50 },
+                        { "pause": {"duration": "30s"} },
+                        { "setWeight": 100 }
+                      ]
                     }
+                  },
+                  "workloadRef": {
+                    "apiVersion": "apps/v1",
+                    "kind": "Deployment",
+                    "name": .metadata.name
                   }
-                })'
+                }
+              })'
         EOF
         
         chmod +x /tmp/helm-post-renderer.sh
