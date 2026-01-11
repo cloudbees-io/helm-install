@@ -175,7 +175,7 @@ runs:
                     "name": .metadata.name
                   }
                 }
-              })'
+              }) | split_doc'
         EOF
         
         chmod +x /tmp/helm-post-renderer.sh
