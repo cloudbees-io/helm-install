@@ -22,7 +22,8 @@ RUN set -eux; \
 	chmod +x /usr/local/bin/kubectl; \
 	kubectl version --client
 
-ARG ARGO_ROLLOUT_PLUGIN_VERSION=v1.8.3
+# Bump argo-rollouts version to latest rc to pick up CVE-2024-45337 fix
+ARG ARGO_ROLLOUT_PLUGIN_VERSION=v1.9.0-rc3
 RUN set -eux; \
 	ARCH="`uname -m | sed 's!x86_64!amd64!; s!aarch64!arm64!'`"; \
 	wget -qO /usr/local/bin/kubectl-argo-rollouts https://github.com/argoproj/argo-rollouts/releases/download/$ARGO_ROLLOUT_PLUGIN_VERSION/kubectl-argo-rollouts-linux-$ARCH; \

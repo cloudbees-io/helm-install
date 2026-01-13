@@ -52,6 +52,9 @@ inputs:
       CloudBees registry configuration file containing the registries to use for loading images.
       By default it uses the file containing the registries configured under 'Integrations' in the CloudBees platform.
     default: ${{ cloudbees.registries }}
+  deployment-strategy:
+    description: 'Deployment strategy to use. Possible values are: none, canary'
+    default: none
 runs:
   using: composite
   steps:
@@ -133,54 +136,57 @@ runs:
                 install:
                 - "--timeout"
                 - "10m"
-                - "--post-renderer"
-                - "/tmp/helm-post-renderer.sh"
                 upgrade:
                 - "--timeout"
                 - "10m"
-                - "--post-renderer"
-                - "/tmp/helm-post-renderer.sh"
         EOF
         
-        cat - >/tmp/helm-post-renderer.sh <<-EOF
-        #!/bin/sh
-        cat <&0 | yq '
-        # 1. Emit all original documents
-        .,
-        ( select(.kind == "Deployment") |
-            # 2. Emit a Rollout for every Deployment
-              {
-                "apiVersion": "argoproj.io/v1alpha1",
-                "kind": "Rollout",
-                "metadata": {
-                  "name": .metadata.name,
-                  "labels": .metadata.labels
-                },
-                "spec": {
-                  "replicas": (.spec.replicas // 1),
-                  "selector": .spec.selector,
-                  "strategy": {
-                    "canary": {
-                      "steps": [
-                        { "setWeight": 20 },
-                        { "pause": {} },
-                        { "setWeight": 50 },
-                        { "pause": {"duration": "30s"} },
-                        { "setWeight": 100 }
-                      ]
-                    }
+        if [ "${DEPLOYMENT_STRATEGY}" = "canary" ]; then
+          yq -i '.deploy.helm.flags.install += "--post-renderer"' /tmp/skaffold/skaffold.yaml
+          yq -i '.deploy.helm.flags.install += "/tmp/helm-post-renderer.sh"' /tmp/skaffold/skaffold.yaml
+          yq -i '.deploy.helm.flags.upgrade += "--post-renderer"' /tmp/skaffold/skaffold.yaml
+          yq -i '.deploy.helm.flags.upgrade += "/tmp/helm-post-renderer.sh"' /tmp/skaffold/skaffold.yaml
+          
+          cat - >/tmp/helm-post-renderer.sh <<-EOF
+          #!/bin/sh
+          cat <&0 | yq '
+          # 1. Emit all original documents
+          .,
+          ( select(.kind == "Deployment") |
+              # 2. Emit a Rollout for every Deployment
+                {
+                  "apiVersion": "argoproj.io/v1alpha1",
+                  "kind": "Rollout",
+                  "metadata": {
+                    "name": .metadata.name,
+                    "labels": .metadata.labels
                   },
-                  "workloadRef": {
-                    "apiVersion": "apps/v1",
-                    "kind": "Deployment",
-                    "scaleDown": "onsuccess",
-                    "name": .metadata.name
+                  "spec": {
+                    "replicas": (.spec.replicas),
+                    "selector": .spec.selector,
+                    "strategy": {
+                      "canary": {
+                        "steps": [
+                          { "setWeight": 20 },
+                          { "pause": {} },
+                          { "setWeight": 50 },
+                          { "pause": {"duration": "30s"} },
+                          { "setWeight": 100 }
+                        ]
+                      }
+                    },
+                    "workloadRef": {
+                      "apiVersion": "apps/v1",
+                      "kind": "Deployment",
+                      "scaleDown": "onsuccess",
+                      "name": .metadata.name
+                    }
                   }
-                }
-              }) | split_doc'
-        EOF
-        
-        chmod +x /tmp/helm-post-renderer.sh
+                }) | split_doc'
+          EOF
+          
+          chmod +x /tmp/helm-post-renderer.sh
+        fi
         
         yq -i '.
           | .deploy.helm.releases[0].name = env(RELEASE_NAME)
@@ -243,6 +249,11 @@ runs:
 
         echo "Installing helm release $RELEASE_NAME from chart location $CHART_LOCATION into namespace $HELM_NAMESPACE"
         if [ "${{ inputs.dry-run == 'true' }}" = true ]; then
+        
+          post_renderer_arg=""
+          if [ "$DEPLOYMENT_STRATEGY" = "canary" ]; then
+            post_renderer_arg=""--post-renderer /tmp/helm-post-renderer.sh
+          fi
           # Run helm in dry-run mode
           helm upgrade --install "$RELEASE_NAME" "$CHART_LOCATION" \
             --version "$CHART_VERSION" \
@@ -251,7 +262,7 @@ runs:
             --values /tmp/inline-values.yaml \
             --create-namespace \
             --timeout "$TIMEOUT" \
-            --post-renderer /tmp/helm-post-renderer.sh \
+            ${post_renderer_arg} \
             --dry-run
         else
           # Let skaffold deploy the chart to log details on failure
@@ -273,3 +284,4 @@ runs:
         HELM_MAX_HISTORY: ${{ inputs.max-history }}
         HELM_DEBUG: ${{ inputs.debug == 'true' && 'true' || 'false' }}
         CLOUDBEES_REGISTRIES_CONFIG: ${{ inputs.registry-configuration }}
+        DEPLOYMENT_STRATEGY: ${{ inputs.deployment-strategy }}
