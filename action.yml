@@ -146,7 +146,7 @@ runs:
           yq -i '.deploy.helm.flags.install += "/tmp/helm-post-renderer.sh"' /tmp/skaffold/skaffold.yaml
           yq -i '.deploy.helm.flags.upgrade += "--post-renderer"' /tmp/skaffold/skaffold.yaml
           yq -i '.deploy.helm.flags.upgrade += "/tmp/helm-post-renderer.sh"' /tmp/skaffold/skaffold.yaml
-          
+        
           cat - >/tmp/helm-post-renderer.sh <<-EOF
           #!/bin/sh
           cat <&0 | yq '
@@ -184,7 +184,7 @@ runs:
                   }
                 }) | split_doc'
           EOF
-          
+        
           chmod +x /tmp/helm-post-renderer.sh
         fi
         
