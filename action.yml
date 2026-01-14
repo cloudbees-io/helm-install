@@ -183,7 +183,7 @@ runs:
                     }
                   }
                 }) | split_doc'
-          EOF
+        EOF
         
           chmod +x /tmp/helm-post-renderer.sh
         fi
