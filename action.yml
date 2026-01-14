@@ -252,7 +252,7 @@ runs:
         
           post_renderer_arg=""
           if [ "$DEPLOYMENT_STRATEGY" = "canary" ]; then
-            post_renderer_arg=""--post-renderer /tmp/helm-post-renderer.sh
+            post_renderer_arg="--post-renderer /tmp/helm-post-renderer.sh"
           fi
           # Run helm in dry-run mode
           helm upgrade --install "$RELEASE_NAME" "$CHART_LOCATION" \
