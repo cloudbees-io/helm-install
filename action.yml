@@ -146,47 +146,47 @@ runs:
           yq -i '.deploy.helm.flags.install += "/tmp/helm-post-renderer.sh"' /tmp/skaffold/skaffold.yaml
           yq -i '.deploy.helm.flags.upgrade += "--post-renderer"' /tmp/skaffold/skaffold.yaml
           yq -i '.deploy.helm.flags.upgrade += "/tmp/helm-post-renderer.sh"' /tmp/skaffold/skaffold.yaml
+        fi
         
-          cat - >/tmp/helm-post-renderer.sh <<-EOF
-          #!/bin/sh
-          cat <&0 | yq '
-          # 1. Emit all original documents
-          .,
-          ( select(.kind == "Deployment") |
-              # 2. Emit a Rollout for every Deployment
-                {
-                  "apiVersion": "argoproj.io/v1alpha1",
-                  "kind": "Rollout",
-                  "metadata": {
-                    "name": .metadata.name,
-                    "labels": .metadata.labels
-                  },
-                  "spec": {
-                    "replicas": (.spec.replicas),
-                    "selector": .spec.selector,
-                    "strategy": {
-                      "canary": {
-                        "steps": [
-                          { "setWeight": 20 },
-                          { "pause": {} },
-                          { "setWeight": 50 },
-                          { "pause": {"duration": "30s"} },
-                          { "setWeight": 100 }
-                        ]
-                      }
-                    },
-                    "workloadRef": {
-                      "apiVersion": "apps/v1",
-                      "kind": "Deployment",
-                      "scaleDown": "onsuccess",
-                      "name": .metadata.name
+        cat - >/tmp/helm-post-renderer.sh <<-EOF
+        #!/bin/sh
+        cat <&0 | yq '
+        # 1. Emit all original documents
+        .,
+        ( select(.kind == "Deployment") |
+            # 2. Emit a Rollout for every Deployment
+              {
+                "apiVersion": "argoproj.io/v1alpha1",
+                "kind": "Rollout",
+                "metadata": {
+                  "name": .metadata.name,
+                  "labels": .metadata.labels
+                },
+                "spec": {
+                  "replicas": (.spec.replicas // 1),
+                  "selector": .spec.selector,
+                  "strategy": {
+                    "canary": {
+                      "steps": [
+                        { "setWeight": 20 },
+                        { "pause": {} },
+                        { "setWeight": 50 },
+                        { "pause": {"duration": "30s"} },
+                        { "setWeight": 100 }
+                      ]
                     }
+                  },
+                  "workloadRef": {
+                    "apiVersion": "apps/v1",
+                    "kind": "Deployment",
+                    "scaleDown": "onsuccess",
+                    "name": .metadata.name
                   }
-                }) | split_doc'
+                }
+              }) | split_doc'
         EOF
         
-          chmod +x /tmp/helm-post-renderer.sh
-        fi
+        chmod +x /tmp/helm-post-renderer.sh
         
         yq -i '.
           | .deploy.helm.releases[0].name = env(RELEASE_NAME)
