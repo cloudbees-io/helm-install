@@ -55,6 +55,10 @@ inputs:
   deployment-strategy:
     description: 'Deployment strategy to use. Possible values are: none, canary'
     default: none
+outputs:
+  rollout-name:
+    value: ${{ steps.helm-install.outputs.rollout_name }}
+    description: 'The name of the Argo Rollout resource used to orchestrate the deployment strategy if used.'
 runs:
   using: composite
   steps:
@@ -183,7 +187,7 @@ runs:
                     "name": .metadata.name
                   }
                 }
-              }) | split_doc'
+              }) | split_doc' | tee /tmp/helm-post-renderer-output.yaml
         EOF
         
         chmod +x /tmp/helm-post-renderer.sh
@@ -270,6 +274,14 @@ runs:
           skaffold config set collect-metrics false
           skaffold deploy
         fi
+        # if /tmp/helm-post-renderer-output.yaml exists, get the rollout name
+        rollout_name=""
+        if [ -f /tmp/helm-post-renderer-output.yaml ]; then
+          rollout_name="$(yq 'select(.kind == "Rollout") | .metadata.name' post-templates.yaml)"
+          echo "Rollout resource from Helm post-renderer output: $rollout_name"
+        fi
+        # Output the rollout name as action output
+        echo -n $rollout_name > "$CLOUDBEES_OUTPUTS/rollout_name"
       env:
         CHART_LOCATION: ${{ inputs.chart-location }}
         CHART_VERSION: ${{ inputs.version }}
