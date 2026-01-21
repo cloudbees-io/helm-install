@@ -277,7 +277,7 @@ runs:
         # if /tmp/helm-post-renderer-output.yaml exists, get the rollout name
         rollout_name=""
         if [ -f /tmp/helm-post-renderer-output.yaml ]; then
-          rollout_name="$(yq 'select(.kind == "Rollout") | .metadata.name' post-templates.yaml)"
+          rollout_name="$(yq 'select(.kind == "Rollout") | .metadata.name' /tmp/helm-post-renderer-output.yaml)"
           echo "Rollout resource from Helm post-renderer output: $rollout_name"
         fi
         # Output the rollout name as action output
