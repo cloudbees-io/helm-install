@@ -7,7 +7,7 @@ RUN set -eux; \
     apk upgrade --no-cache; \
     apk upgrade --no-cache pcre2
 
-ARG SKAFFOLD_VERSION=v2.16.1
+ARG SKAFFOLD_VERSION=v2.17.1
 
 RUN set -eux; \
 	ARCH="`uname -m | sed 's!x86_64!amd64!; s!aarch64!arm64!'`"; \
