@@ -1,13 +1,13 @@
 FROM public.ecr.aws/l7o7z1g8/actions/registry-config:0.0.76 AS registry-config
 
-FROM alpine/helm:3.18.6
+FROM alpine/helm:3.20.0
 
 RUN set -eux; \
     apk add --no-cache yq; \
     apk upgrade --no-cache; \
     apk upgrade --no-cache pcre2
 
-ARG SKAFFOLD_VERSION=v2.16.1
+ARG SKAFFOLD_VERSION=v2.17.1
 
 RUN set -eux; \
 	ARCH="`uname -m | sed 's!x86_64!amd64!; s!aarch64!arm64!'`"; \
