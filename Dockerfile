@@ -1,4 +1,4 @@
-FROM public.ecr.aws/l7o7z1g8/actions/registry-config:0.0.76 AS registry-config
+FROM public.ecr.aws/l7o7z1g8/actions/registry-config:0.0.83 AS registry-config
 
 FROM alpine/helm:3.20.0
 
