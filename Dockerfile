@@ -7,7 +7,7 @@ RUN set -eux; \
     apk upgrade --no-cache; \
     apk upgrade --no-cache pcre2
 
-ARG SKAFFOLD_VERSION=v2.17.1
+ARG SKAFFOLD_VERSION=v2.17.2
 
 RUN set -eux; \
 	ARCH="`uname -m | sed 's!x86_64!amd64!; s!aarch64!arm64!'`"; \
@@ -15,7 +15,7 @@ RUN set -eux; \
 	chmod +x /usr/local/bin/skaffold; \
 	skaffold version
 
-ARG K8S_VERSION=v1.33.7
+ARG K8S_VERSION=v1.35.2
 RUN set -eux; \
 	ARCH="`uname -m | sed 's!x86_64!amd64!; s!aarch64!arm64!'`"; \
 	wget -qO /usr/local/bin/kubectl https://dl.k8s.io/release/$K8S_VERSION/bin/linux/$ARCH/kubectl; \
