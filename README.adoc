@@ -1,4 +1,4 @@
-= CloudBees action: Install a Helm chart
+= CloudBees action: Install a Helm chart 
 
 Use this action to install a Helm chart into a Kubernetes cluster.
 
