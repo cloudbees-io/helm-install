@@ -255,7 +255,56 @@ jobs:
         namespace: ${{ steps.createns.outputs.name }}
         timeout: 1m
         wait: 'false'
-    - name: test startup probe failure scenario 
+    - id: create-namespace-false-existing-ns
+      name: install a helm chart with create-namespace set to false into existing namespace
+      uses: ./.cloudbees/testing
+      with:
+        release-name: example-no-create-ns
+        chart-location: charts/example
+        namespace: ${{ steps.createns.outputs.name }}
+        create-namespace: 'false'
+        timeout: 2m
+    - name: verify create-namespace false into existing namespace produced a release revision
+      uses: docker://alpine/k8s:1.31.2
+      run: |
+        set -ux
+        [ -n "${REVISION}" ]
+      env:
+        REVISION: ${{ steps.create-namespace-false-existing-ns.outputs.release-revision }}
+    - id: create-namespace-true-new-ns
+      name: install a helm chart with create-namespace set to true into new namespace
+      uses: ./.cloudbees/testing
+      with:
+        release-name: example-create-ns
+        chart-location: charts/example
+        namespace: ${{ format('cn-{0}', cloudbees.scm.sha) }}
+        create-namespace: 'true'
+        timeout: 2m
+    - name: verify create-namespace true into new namespace produced a release revision
+      uses: docker://alpine/k8s:1.31.2
+      run: |
+        set -ux
+        [ -n "${REVISION}" ]
+      env:
+        REVISION: ${{ steps.create-namespace-true-new-ns.outputs.release-revision }}
+    - id: create-namespace-false-missing-ns
+      name: install a helm chart with create-namespace false into non-existent namespace
+      continue-on-error: true
+      uses: ./.cloudbees/testing
+      with:
+        release-name: example-no-ns
+        chart-location: charts/example
+        namespace: ${{ format('missing-{0}', cloudbees.scm.sha) }}
+        create-namespace: 'false'
+        timeout: 2m
+    - name: verify create-namespace false into missing namespace produced no release revision
+      uses: docker://alpine/k8s:1.31.2
+      run: |
+        set -ux
+        [ -z "${REVISION}" ]
+      env:
+        REVISION: ${{ steps.create-namespace-false-missing-ns.outputs.release-revision }}
+    - name: test startup probe failure scenario
       continue-on-error: true
       uses: ./.cloudbees/testing
       with:
