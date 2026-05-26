@@ -9,6 +9,9 @@ inputs:
   namespace:
     description: 'Kubernetes namespace to install the chart in, created if missing'
     default: default
+  create-namespace:
+    description: 'Whether to create the namespace if it does not exist'
+    default: 'true'
   version:
     description: 'Version of the chart to be installed'
   # DEPRECATED: values-file is deprecated, use values-files instead
@@ -52,6 +55,10 @@ inputs:
       CloudBees registry configuration file containing the registries to use for loading images.
       By default it uses the file containing the registries configured under 'Integrations' in the CloudBees platform.
     default: ${{ cloudbees.registries }}
+outputs:
+  release-revision:
+    description: 'The helm release revision number after install/upgrade'
+    value: ${{ steps.helm-install.outputs.release-revision }}
 runs:
   using: composite
   steps:
@@ -126,7 +133,7 @@ runs:
               releases:
               - valuesFiles:
                 - /tmp/values.yaml
-                createNamespace: true
+                ${{ inputs.create-namespace == 'true' && 'createNamespace: true' || 'createNamespace: false' }}
                 skipBuildDependencies: true
                 upgradeOnChange: true
               flags:
@@ -207,11 +214,13 @@ runs:
             --create-namespace \
             --timeout "$TIMEOUT" \
             --dry-run
+          printf '' > $CLOUDBEES_OUTPUTS/release-revision
         else
           # Let skaffold deploy the chart to log details on failure
           cd /tmp/skaffold
           skaffold config set collect-metrics false
           skaffold deploy
+          printf %s "$(helm status "$RELEASE_NAME" -n "$HELM_NAMESPACE" -o yaml | yq '.version')" > $CLOUDBEES_OUTPUTS/release-revision
         fi
       env:
         CHART_LOCATION: ${{ inputs.chart-location }}
