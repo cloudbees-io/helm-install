@@ -1,6 +1,6 @@
 FROM --platform=$TARGETPLATFORM public.ecr.aws/l7o7z1g8/actions/registry-config@sha256:8bd8abe266ae447d3fd13de4bbac1acf52a1156b59a864f8eac6537e914c5807 AS registry-config
 
-FROM alpine/helm:3.20.2
+FROM alpine/helm:3.21.2
 
 RUN set -eux; \
     apk add --no-cache yq; \
