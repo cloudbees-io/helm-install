@@ -1,6 +1,6 @@
 dependencies:
 - name: nginx
   repository: oci://registry-1.docker.io/cloudpirates
-  version: 0.1.11
-digest: sha256:c6a5ea5faf95688bb2812cdc084a398324aca39876e918e4af19b571d179f249
-generated: "2025-10-07T12:48:40.459462+05:30"
+  version: 0.13.0
+digest: sha256:f5fadda74138504e4fd9f3b489c2f51ed11af16dc464b749f57b0d48c457f593
+generated: "2026-06-23T19:41:25.638886794Z"
