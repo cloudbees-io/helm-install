@@ -1,4 +1,4 @@
-FROM --platform=$TARGETPLATFORM public.ecr.aws/l7o7z1g8/actions/registry-config@sha256:8bd8abe266ae447d3fd13de4bbac1acf52a1156b59a864f8eac6537e914c5807 AS registry-config
+FROM --platform=$TARGETPLATFORM public.ecr.aws/l7o7z1g8/actions/registry-config@sha256:a2ae2e2dde0d4c0ea9a1e2c02806a549cd7e6b74f3a453df111e37db0c50c467 AS registry-config
 
 FROM alpine/helm:3.22.1
 
